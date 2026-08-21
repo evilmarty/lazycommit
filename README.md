@@ -146,5 +146,31 @@ lazycommit
 
 ```sh
 go build -o lazycommit .
+```
+
+### Running tests
+
+```sh
+go test ./...
+```
+
+### Checking code coverage
+
+Print per-package coverage summaries:
+
+```sh
 go test ./... -cover
 ```
+
+For a detailed, per-function breakdown, generate a coverage profile and
+inspect it with `go tool cover`:
+
+```sh
+go test ./... -coverprofile=coverage.out -covermode=atomic
+go tool cover -func=coverage.out          # per-function coverage in the terminal
+go tool cover -html=coverage.out          # open an interactive HTML report in a browser
+```
+
+The overall statement coverage total is shown on the last line of
+`go tool cover -func=coverage.out` output. This project targets ≥90%
+overall statement coverage.
