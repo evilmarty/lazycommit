@@ -42,8 +42,8 @@ func TestParseArgs(t *testing.T) {
 			wantCfg: Config{NoEdit: true},
 		},
 		{
-			name:    "local alias",
-			args:    []string{"--local"},
+			name:    "apfel shorthand",
+			args:    []string{"--apfel"},
 			wantCfg: Config{Provider: "apfel"},
 		},
 		{
@@ -72,25 +72,40 @@ func TestParseArgs(t *testing.T) {
 			wantCfg: Config{Prompt: "custom prompt"},
 		},
 		{
-			name:    "no-verify passthrough",
-			args:    []string{"--no-verify"},
-			wantCfg: Config{NoVerify: true},
-			wantGit: []string{"--no-verify"},
-		},
-		{
-			name:    "unknown flags passthrough",
-			args:    []string{"--amend", "-S"},
+			name:    "args after -- passthrough",
+			args:    []string{"--", "--no-verify", "--amend", "-S"},
 			wantCfg: Config{},
-			wantGit: []string{"--amend", "-S"},
+			wantGit: []string{"--no-verify", "--amend", "-S"},
 		},
 		{
-			name: "mixed known and passthrough",
-			args: []string{"--dry-run", "--amend", "--provider", "apfel"},
+			name: "known flags then -- passthrough",
+			args: []string{"--dry-run", "--provider", "apfel", "--", "--amend"},
 			wantCfg: Config{
 				DryRun:   true,
 				Provider: "apfel",
 			},
 			wantGit: []string{"--amend"},
+		},
+		{
+			name:    "bare -- with nothing after",
+			args:    []string{"--dry-run", "--"},
+			wantCfg: Config{DryRun: true},
+			wantGit: nil,
+		},
+		{
+			name:    "unrecognized flag before -- errors",
+			args:    []string{"--amend"},
+			wantErr: true,
+		},
+		{
+			name:    "unrecognized short flag before -- errors",
+			args:    []string{"-S"},
+			wantErr: true,
+		},
+		{
+			name:    "no-verify before -- errors",
+			args:    []string{"--no-verify"},
+			wantErr: true,
 		},
 		{
 			name:    "provider missing value errors",

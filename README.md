@@ -14,9 +14,8 @@ commits. No more staring at a blank commit message.
   the review step and commit as-is.
 - **Configurable prompt**: override the built-in prompt template via a flag
   or environment variable.
-- **Drop-in for `git commit`**: any flags it doesn't recognize (e.g.
-  `--no-verify`, `--amend`, `-S`) are passed straight through to
-  `git commit`.
+- **Drop-in for `git commit`**: put `--` followed by any `git commit` flags
+  (e.g. `--no-verify`, `--amend`, `-S`) and they're passed straight through.
 
 ## Installation
 
@@ -42,7 +41,7 @@ lazycommit
 ```
 
 ```
-Usage: lazycommit [options] [git-commit-flags]
+Usage: lazycommit [options] [-- git-commit-flags]
 
 Auto-generates a commit message using an LLM provider (Copilot by default),
 pre-populates $EDITOR for review, then commits.
@@ -53,13 +52,14 @@ Options:
       --model <m>       Model name to use (provider-specific default if omitted)
       --base-url <url>  Override the API base URL (copilot/openai providers)
       --prompt <text>   Override the prompt template (or use LAZYCOMMIT_PROMPT)
-      --local           Alias for --provider apfel (local Apple model, no network)
+      --apfel           Shorthand for --provider apfel (local Apple model, no network)
       --no-edit         Skip the $EDITOR review step and commit the message as-is
       --dry-run         Print the generated message without committing
-      --no-verify       Skip pre-commit hooks (passed through to git commit)
       --help            Show this help message
 
-Any unrecognised flags are passed directly to git commit.
+Any arguments after "--" are passed directly to git commit (e.g.
+"lazycommit -- --no-verify --amend"). Unrecognized arguments before "--"
+are an error.
 ```
 
 ### Examples
@@ -78,10 +78,10 @@ lazycommit --no-edit
 lazycommit --provider openai --model gpt-4o
 
 # Use the local apfel model (no network calls)
-lazycommit --provider apfel   # or: lazycommit --local
+lazycommit --provider apfel   # or: lazycommit --apfel
 
-# Pass extra flags through to `git commit`
-lazycommit --no-verify --amend
+# Pass extra flags through to `git commit` after "--"
+lazycommit -- --no-verify --amend
 ```
 
 ## Providers
@@ -111,7 +111,7 @@ Uses an OpenAI-compatible Chat Completions API (`/chat/completions`).
 
 Shells out to the local [`apfel`](https://github.com/Arthur-Ficial/apfel) CLI to run an
 on-device Apple Intelligence model — no network calls, no API key.
-Equivalent to `--provider apfel` or the `--local` alias.
+Equivalent to `--provider apfel` or the `--apfel` shorthand.
 
 ## Configuration
 

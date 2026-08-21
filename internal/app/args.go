@@ -9,11 +9,10 @@ import (
 
 // Config holds the parsed CLI configuration for a single lazycommit invocation.
 type Config struct {
-	Help     bool
-	DryRun   bool
-	Patch    bool
-	NoEdit   bool
-	NoVerify bool
+	Help   bool
+	DryRun bool
+	Patch  bool
+	NoEdit bool
 
 	Provider string
 	Model    string
@@ -21,14 +20,22 @@ type Config struct {
 	Prompt   string
 }
 
-// ParseArgs parses the given CLI arguments, returning the parsed Config and
-// any unrecognized flags/arguments to be forwarded to `git commit`.
+// ParseArgs parses the given CLI arguments. Everything up to (but not
+// including) a "--" separator must be a recognized lazycommit flag;
+// unrecognized flags/arguments in that region are an error. Everything
+// after "--" is returned verbatim as gitFlags, to be forwarded to
+// `git commit`.
 func ParseArgs(args []string) (*Config, []string, error) {
 	cfg := &Config{}
 	var gitFlags []string
 
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
+
+		if arg == "--" {
+			gitFlags = append(gitFlags, args[i+1:]...)
+			break
+		}
 
 		// Support --flag=value in addition to --flag value.
 		name := arg
@@ -62,8 +69,8 @@ func ParseArgs(args []string) (*Config, []string, error) {
 			cfg.Patch = true
 		case "--no-edit":
 			cfg.NoEdit = true
-		case "--local":
-			// Back-compat alias for --provider apfel.
+		case "--apfel":
+			// Shorthand for --provider apfel.
 			cfg.Provider = "apfel"
 		case "--provider":
 			v, err := takeValue(name)
@@ -89,11 +96,8 @@ func ParseArgs(args []string) (*Config, []string, error) {
 				return nil, nil, err
 			}
 			cfg.Prompt = v
-		case "--no-verify":
-			cfg.NoVerify = true
-			gitFlags = append(gitFlags, arg)
 		default:
-			gitFlags = append(gitFlags, arg)
+			return nil, nil, fmt.Errorf("unknown argument: %s (use \"--\" to pass arguments through to git commit)", arg)
 		}
 	}
 
@@ -102,7 +106,7 @@ func ParseArgs(args []string) (*Config, []string, error) {
 
 // Usage returns the CLI help text.
 func Usage() string {
-	return `Usage: lazycommit [options] [git-commit-flags]
+	return `Usage: lazycommit [options] [-- git-commit-flags]
 
 Auto-generates a commit message using an LLM provider (Copilot by default),
 pre-populates $EDITOR for review, then commits.
@@ -113,12 +117,13 @@ Options:
       --model <m>       Model name to use (provider-specific default if omitted)
       --base-url <url>  Override the API base URL (copilot/openai providers)
       --prompt <text>   Override the prompt template (or use LAZYCOMMIT_PROMPT)
-      --local           Alias for --provider apfel (local Apple model, no network)
+      --apfel           Shorthand for --provider apfel (local Apple model, no network)
       --no-edit         Skip the $EDITOR review step and commit the message as-is
       --dry-run         Print the generated message without committing
-      --no-verify       Skip pre-commit hooks (passed through to git commit)
       --help            Show this help message
 
-Any unrecognised flags are passed directly to git commit.
+Any arguments after "--" are passed directly to git commit (e.g.
+"lazycommit -- --no-verify --amend"). Unrecognized arguments before "--"
+are an error.
 `
 }
