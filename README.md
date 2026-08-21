@@ -174,3 +174,28 @@ go tool cover -html=coverage.out          # open an interactive HTML report in a
 The overall statement coverage total is shown on the last line of
 `go tool cover -func=coverage.out` output. This project targets ≥90%
 overall statement coverage.
+
+## Contributing
+
+Contributions are welcome! To submit a change:
+
+1. Fork the repository and create a topic branch off `main`.
+2. Make your changes, keeping them focused and scoped to a single concern.
+3. Format and vet your code:
+   ```sh
+   gofmt -l .
+   go vet ./...
+   ```
+4. Add or update tests for any behavior you change, and make sure the suite
+   passes with coverage still at or above 90%:
+   ```sh
+   go test ./... -cover
+   ```
+5. Update the README or other docs if you change user-facing behavior
+   (flags, environment variables, providers, etc.).
+6. Commit with a clear, descriptive message and open a pull request
+   describing the change and why it's needed.
+
+Please keep pull requests small and focused — it makes them easier to
+review. If you're planning a larger change (e.g. a new provider), consider
+opening an issue first to discuss the approach.
