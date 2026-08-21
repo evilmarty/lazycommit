@@ -1,0 +1,101 @@
+package app
+
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/evilmarty/lazycommit/provider"
+)
+
+const DefaultProvider = "copilot"
+
+// GetEnv abstracts environment variable lookup, primarily for testability.
+type GetEnv func(string) string
+
+// ResolveProvider determines the effective provider name from the flag,
+// falling back to LAZYCOMMIT_PROVIDER, then DefaultProvider.
+func ResolveProvider(flagValue string, getenv GetEnv) string {
+	if flagValue != "" {
+		return flagValue
+	}
+	if v := getenv("LAZYCOMMIT_PROVIDER"); v != "" {
+		return v
+	}
+	return DefaultProvider
+}
+
+// ResolveModel determines the effective model name from the flag, falling
+// back to LAZYCOMMIT_MODEL, then "" (provider-specific default applies).
+func ResolveModel(flagValue string, getenv GetEnv) string {
+	if flagValue != "" {
+		return flagValue
+	}
+	return getenv("LAZYCOMMIT_MODEL")
+}
+
+// ResolvePrompt determines the effective prompt template from the flag,
+// falling back to LAZYCOMMIT_PROMPT, then the built-in default.
+func ResolvePrompt(flagValue string, getenv GetEnv) string {
+	if flagValue != "" {
+		return flagValue
+	}
+	if v := getenv("LAZYCOMMIT_PROMPT"); v != "" {
+		return v
+	}
+	return DefaultPromptTemplate
+}
+
+// NewProvider builds the Generator for the given resolved provider name.
+func NewProvider(name, model, baseURL string, getenv GetEnv) (provider.Generator, error) {
+	switch name {
+	case "copilot", "":
+		hostsFile := getenv("COPILOT_HOSTS_FILE")
+		if hostsFile == "" {
+			hostsFile = filepath.Join(homeDir(getenv), ".config", "github-copilot", "hosts.json")
+		}
+		appsFile := getenv("COPILOT_APPS_FILE")
+		if appsFile == "" {
+			appsFile = filepath.Join(homeDir(getenv), ".config", "github-copilot", "apps.json")
+		}
+		if baseURL == "" {
+			baseURL = getenv("GITHUB_API_URL")
+		}
+		return &provider.CopilotProvider{
+			Model:       model,
+			APIBaseURL:  baseURL,
+			HostsFile:   hostsFile,
+			AppsFile:    appsFile,
+			MaxTokens:   256,
+			Temperature: 0.2,
+		}, nil
+	case "openai":
+		if baseURL == "" {
+			baseURL = getenv("OPENAI_BASE_URL")
+		}
+		return &provider.OpenAIProvider{
+			APIKey:      getenv("OPENAI_API_KEY"),
+			Model:       model,
+			BaseURL:     baseURL,
+			MaxTokens:   256,
+			Temperature: 0.2,
+		}, nil
+	case "apfel":
+		return &provider.ApfelProvider{
+			MaxTokens:   256,
+			Temperature: 0.8,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unknown provider %q (expected copilot, openai, or apfel)", name)
+	}
+}
+
+func homeDir(getenv GetEnv) string {
+	if h := getenv("HOME"); h != "" {
+		return h
+	}
+	if h, err := os.UserHomeDir(); err == nil {
+		return h
+	}
+	return ""
+}
