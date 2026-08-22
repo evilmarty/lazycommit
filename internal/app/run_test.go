@@ -105,7 +105,7 @@ func TestRunDryRun(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
 		Git: newFakeGit(true, true),
-		NewProvider: func(name, model, baseURL string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
 			return fakeGenerator{msg: "feat: add cool thing"}, nil
 		},
 	}
@@ -128,7 +128,7 @@ func TestRunEmptyGeneratedMessageFallsBackToCommit(t *testing.T) {
 	}
 	deps := Deps{
 		Git: git,
-		NewProvider: func(name, model, baseURL string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
 			return fakeGenerator{msg: ""}, nil
 		},
 	}
@@ -151,7 +151,7 @@ func TestRunNoEditCommitsDirectly(t *testing.T) {
 	}
 	deps := Deps{
 		Git: git,
-		NewProvider: func(name, model, baseURL string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
 			return fakeGenerator{msg: "feat: no edit path"}, nil
 		},
 	}
@@ -179,7 +179,7 @@ func TestRunEmptyEditorSkipsReviewLikeNoEdit(t *testing.T) {
 	}
 	deps := Deps{
 		Git: git,
-		NewProvider: func(name, model, baseURL string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
 			return fakeGenerator{msg: "feat: unset editor"}, nil
 		},
 		Editor: func(path string) error {
@@ -210,7 +210,7 @@ func TestRunWithEditorReview(t *testing.T) {
 	}
 	deps := Deps{
 		Git: git,
-		NewProvider: func(name, model, baseURL string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
 			return fakeGenerator{msg: "feat: reviewed"}, nil
 		},
 		Editor: func(path string) error {
@@ -231,7 +231,7 @@ func TestRunEditorWipesMessageAborts(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
 		Git: newFakeGit(true, true),
-		NewProvider: func(name, model, baseURL string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
 			return fakeGenerator{msg: "feat: original"}, nil
 		},
 		Editor: func(path string) error {
@@ -251,7 +251,7 @@ func TestRunGeneratorError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
 		Git: newFakeGit(true, true),
-		NewProvider: func(name, model, baseURL string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
 			return fakeGenerator{err: errors.New("network down")}, nil
 		},
 	}
@@ -268,7 +268,7 @@ func TestRunUnknownProviderError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
 		Git: newFakeGit(true, true),
-		NewProvider: func(name, model, baseURL string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
 			return nil, errors.New("unknown provider")
 		},
 	}
@@ -290,7 +290,7 @@ func TestRunPatchFlagInvokesAddPatch(t *testing.T) {
 	}
 	deps := Deps{
 		Git: git,
-		NewProvider: func(name, model, baseURL string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
 			return fakeGenerator{msg: "feat: patched"}, nil
 		},
 		Editor: func(path string) error { return nil },

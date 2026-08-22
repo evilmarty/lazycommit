@@ -17,6 +17,7 @@ type Config struct {
 	Provider string
 	Model    string
 	BaseURL  string
+	APIKey   string
 	Prompt   string
 }
 
@@ -98,6 +99,12 @@ func ParseArgs(args []string) (*Config, []string, error) {
 				return nil, nil, err
 			}
 			cfg.BaseURL = v
+		case "--api-key":
+			v, err := takeValue(name)
+			if err != nil {
+				return nil, nil, err
+			}
+			cfg.APIKey = v
 		case "--prompt":
 			v, err := takeValue(name)
 			if err != nil {
@@ -124,6 +131,7 @@ Options:
       --provider <p>    Provider to use: copilot (default), openai, apfel
       --model <m>       Model name to use (provider-specific default if omitted)
       --base-url <url>  Override the API base URL (copilot/openai providers)
+      --api-key <key>   API key to use (openai provider; or use OPENAI_API_KEY)
       --prompt <text>   Override the prompt template (or use LAZYCOMMIT_PROMPT)
       --apfel           Shorthand for --provider apfel (local Apple model, no network)
       --ollama          Shorthand for --provider openai --base-url http://localhost:11434/v1

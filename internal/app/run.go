@@ -14,7 +14,7 @@ import (
 // fields fall back to real implementations.
 type Deps struct {
 	Git         *Git
-	NewProvider func(name, model, baseURL string, getenv GetEnv) (provider.Generator, error)
+	NewProvider func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error)
 	Editor      Editor
 }
 
@@ -80,7 +80,7 @@ func RunWithDeps(args []string, stdout, stderr io.Writer, getenv GetEnv, deps De
 	promptTemplate := ResolvePrompt(cfg.Prompt, getenv)
 	prompt := BuildPrompt(promptTemplate, diff, stat)
 
-	gen, err := newProvider(providerName, model, cfg.BaseURL, getenv)
+	gen, err := newProvider(providerName, model, cfg.BaseURL, cfg.APIKey, getenv)
 	if err != nil {
 		fmt.Fprintf(stderr, "\u274c  %s\n", err)
 		return 1

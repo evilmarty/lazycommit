@@ -57,7 +57,7 @@ func ResolvePrompt(flagValue string, getenv GetEnv) string {
 }
 
 // NewProvider builds the Generator for the given resolved provider name.
-func NewProvider(name, model, baseURL string, getenv GetEnv) (provider.Generator, error) {
+func NewProvider(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
 	switch name {
 	case "copilot", "":
 		hostsFile := getenv("COPILOT_HOSTS_FILE")
@@ -83,8 +83,11 @@ func NewProvider(name, model, baseURL string, getenv GetEnv) (provider.Generator
 		if baseURL == "" {
 			baseURL = getenv("OPENAI_BASE_URL")
 		}
+		if apiKey == "" {
+			apiKey = getenv("OPENAI_API_KEY")
+		}
 		return &provider.OpenAIProvider{
-			APIKey:      getenv("OPENAI_API_KEY"),
+			APIKey:      apiKey,
 			Model:       model,
 			BaseURL:     baseURL,
 			MaxTokens:   256,

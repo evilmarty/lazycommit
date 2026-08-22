@@ -77,6 +77,16 @@ func TestParseArgs(t *testing.T) {
 			wantCfg: Config{BaseURL: "https://example.com"},
 		},
 		{
+			name:    "api-key value",
+			args:    []string{"--api-key", "sk-test"},
+			wantCfg: Config{APIKey: "sk-test"},
+		},
+		{
+			name:    "api-key equals value",
+			args:    []string{"--api-key=sk-test"},
+			wantCfg: Config{APIKey: "sk-test"},
+		},
+		{
 			name:    "prompt value",
 			args:    []string{"--prompt", "custom prompt"},
 			wantCfg: Config{Prompt: "custom prompt"},
@@ -130,6 +140,11 @@ func TestParseArgs(t *testing.T) {
 		{
 			name:    "base-url missing value errors",
 			args:    []string{"--base-url"},
+			wantErr: true,
+		},
+		{
+			name:    "api-key missing value errors",
+			args:    []string{"--api-key"},
 			wantErr: true,
 		},
 		{

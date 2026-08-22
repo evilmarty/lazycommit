@@ -52,7 +52,7 @@ func TestNewProviderCopilot(t *testing.T) {
 		"COPILOT_HOSTS_FILE": "",
 		"GITHUB_API_URL":     "https://ghe.example.com/api/v3",
 	})
-	gen, err := NewProvider("copilot", "custom-model", "", env)
+	gen, err := NewProvider("copilot", "custom-model", "", "", env)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestNewProviderCopilot(t *testing.T) {
 
 func TestNewProviderCopilotBaseURLFlagWinsOverEnv(t *testing.T) {
 	env := envMap(map[string]string{"GITHUB_API_URL": "https://env.example.com"})
-	gen, err := NewProvider("copilot", "", "https://flag.example.com", env)
+	gen, err := NewProvider("copilot", "", "https://flag.example.com", "", env)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -88,7 +88,7 @@ func TestNewProviderOpenAI(t *testing.T) {
 		"OPENAI_API_KEY":  "sk-test",
 		"OPENAI_BASE_URL": "https://custom.openai.example/v1",
 	})
-	gen, err := NewProvider("openai", "", "", env)
+	gen, err := NewProvider("openai", "", "", "", env)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -104,8 +104,20 @@ func TestNewProviderOpenAI(t *testing.T) {
 	}
 }
 
+func TestNewProviderOpenAIAPIKeyFlagWinsOverEnv(t *testing.T) {
+	env := envMap(map[string]string{"OPENAI_API_KEY": "sk-env"})
+	gen, err := NewProvider("openai", "", "", "sk-flag", env)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	op := gen.(*provider.OpenAIProvider)
+	if op.APIKey != "sk-flag" {
+		t.Errorf("expected flag API key to win, got %q", op.APIKey)
+	}
+}
+
 func TestNewProviderApfel(t *testing.T) {
-	gen, err := NewProvider("apfel", "", "", envMap(nil))
+	gen, err := NewProvider("apfel", "", "", "", envMap(nil))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -115,7 +127,7 @@ func TestNewProviderApfel(t *testing.T) {
 }
 
 func TestNewProviderUnknown(t *testing.T) {
-	if _, err := NewProvider("bogus", "", "", envMap(nil)); err == nil {
+	if _, err := NewProvider("bogus", "", "", "", envMap(nil)); err == nil {
 		t.Fatal("expected error for unknown provider")
 	}
 }

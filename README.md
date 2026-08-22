@@ -52,6 +52,7 @@ Options:
       --provider <p>    Provider to use: copilot (default), openai, apfel
       --model <m>       Model name to use (provider-specific default if omitted)
       --base-url <url>  Override the API base URL (copilot/openai providers)
+      --api-key <key>   API key to use (openai provider; or use OPENAI_API_KEY)
       --prompt <text>   Override the prompt template (or use LAZYCOMMIT_PROMPT)
       --apfel           Shorthand for --provider apfel (local Apple model, no network)
       --ollama          Shorthand for --provider openai --base-url http://localhost:11434/v1
@@ -99,7 +100,7 @@ lazycommit --dry-run
 lazycommit --no-edit
 
 # Use OpenAI instead of Copilot
-lazycommit --provider openai --model gpt-4o
+lazycommit --provider openai --model gpt-4o --api-key sk-...
 
 # Use the local apfel model (no network calls)
 lazycommit --provider apfel   # or: lazycommit --apfel
@@ -130,8 +131,9 @@ token written by editor Copilot plugins (`copilot.vim` / `copilot.lua`).
 
 Uses an OpenAI-compatible Chat Completions API (`/chat/completions`).
 
-- Requires `OPENAI_API_KEY` when using the default OpenAI endpoint. An API
-  key is not required for a custom `--base-url` (e.g. local servers like
+- Requires an API key when using the default OpenAI endpoint, via
+  `--api-key` or `OPENAI_API_KEY` (the flag takes precedence). An API key
+  is not required for a custom `--base-url` (e.g. local servers like
   Ollama or LM Studio, which typically don't check it).
 - `--base-url` / `OPENAI_BASE_URL` overrides the API base (default
   `https://api.openai.com/v1`), so any OpenAI-compatible endpoint works.
@@ -159,7 +161,7 @@ Flags always take precedence over environment variables.
 | `--prompt`    | `LAZYCOMMIT_PROMPT`    | Prompt template override (see below)                |
 | `--base-url`  | `GITHUB_API_URL`       | Base URL override for the `copilot` provider         |
 | `--base-url`  | `OPENAI_BASE_URL`      | Base URL override for the `openai` provider          |
-| —             | `OPENAI_API_KEY`       | API key for the `openai` provider                    |
+| `--api-key`   | `OPENAI_API_KEY`       | API key for the `openai` provider                    |
 | —             | `EDITOR`               | Editor used to review the generated message          |
 | —             | `COPILOT_HOSTS_FILE`   | Path to the Copilot OAuth hosts.json file            |
 | —             | `COPILOT_APPS_FILE`    | Path to the Copilot OAuth apps.json file             |
