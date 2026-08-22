@@ -131,7 +131,7 @@ Options:
       --provider <p>    Provider to use: copilot (default), openai, apfel
       --model <m>       Model name to use (provider-specific default if omitted)
       --base-url <url>  Override the API base URL (copilot/openai providers)
-      --api-key <key>   API key to use (openai provider; or use OPENAI_API_KEY)
+      --api-key <key>   API key/OAuth token to use (openai/copilot providers; or use OPENAI_API_KEY)
       --prompt <text>   Override the prompt template (or use LAZYCOMMIT_PROMPT)
       --apfel           Shorthand for --provider apfel (local Apple model, no network)
       --ollama          Shorthand for --provider openai --base-url http://localhost:11434/v1

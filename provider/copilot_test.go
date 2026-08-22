@@ -261,6 +261,67 @@ func TestCopilotOAuthTokenInvalidJSON(t *testing.T) {
 	}
 }
 
+func TestCopilotOAuthTokenUsesAPIKeyDirectly(t *testing.T) {
+	// APIKey should be used as-is, without touching HostsFile/AppsFile at
+	// all (paths point at nonexistent files to prove they're never read).
+	p := &CopilotProvider{
+		APIKey:    "explicit-key",
+		HostsFile: "/nonexistent/hosts.json",
+		AppsFile:  "/nonexistent/apps.json",
+	}
+	token, err := p.oauthToken()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if token != "explicit-key" {
+		t.Errorf("got %q, want %q", token, "explicit-key")
+	}
+}
+
+func TestCopilotProviderGenerateUsesAPIKeyInsteadOfHostsFile(t *testing.T) {
+	var chatServer *httptest.Server
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "token explicit-key" {
+			t.Errorf("unexpected auth header: %s", r.Header.Get("Authorization"))
+		}
+		resp := map[string]any{
+			"token": "api-token-456",
+			"endpoints": map[string]string{
+				"api": chatServer.URL,
+			},
+		}
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer tokenServer.Close()
+
+	chatServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := chatCompletionResponse{}
+		resp.Choices = append(resp.Choices, struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		}{})
+		resp.Choices[0].Message.Content = "feat: via api key"
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer chatServer.Close()
+
+	p := &CopilotProvider{
+		APIBaseURL: tokenServer.URL,
+		APIKey:     "explicit-key",
+		HostsFile:  "/nonexistent/hosts.json",
+		AppsFile:   "/nonexistent/apps.json",
+	}
+
+	got, err := p.Generate(context.Background(), "test prompt")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != "feat: via api key" {
+		t.Errorf("got %q", got)
+	}
+}
+
 func TestCopilotProviderNoTokenFilesConfigured(t *testing.T) {
 	p := &CopilotProvider{}
 	if _, err := p.oauthToken(); err == nil {

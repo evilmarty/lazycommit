@@ -36,6 +36,10 @@ type CopilotProvider struct {
 	// taken from the token-exchange response (or CopilotDefaultChatBaseURL
 	// if unset), since GHE/proxy deployments return their own endpoint.
 	APIBaseURL string
+	// APIKey, when set (via --api-key / OPENAI_API_KEY), is used directly
+	// as the OAuth token for the token exchange, skipping the search for a
+	// token in HostsFile/AppsFile.
+	APIKey string
 	// HostsFile and AppsFile are the paths to the Copilot OAuth token
 	// files written by editor plugins.
 	HostsFile string
@@ -69,9 +73,15 @@ func (p *CopilotProvider) model() string {
 	return CopilotDefaultModel
 }
 
-// oauthToken locates the Copilot OAuth token from the hosts/apps JSON files
-// written by editor plugins.
+// oauthToken returns the Copilot OAuth token to use for the token exchange.
+// If APIKey is set, it is used directly, skipping the hosts/apps file
+// search. Otherwise, it is located from the hosts/apps JSON files written
+// by editor plugins.
 func (p *CopilotProvider) oauthToken() (string, error) {
+	if p.APIKey != "" {
+		return p.APIKey, nil
+	}
+
 	var candidates []string
 	for _, f := range []string{p.HostsFile, p.AppsFile} {
 		if f != "" {

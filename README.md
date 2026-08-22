@@ -52,7 +52,7 @@ Options:
       --provider <p>    Provider to use: copilot (default), openai, apfel
       --model <m>       Model name to use (provider-specific default if omitted)
       --base-url <url>  Override the API base URL (copilot/openai providers)
-      --api-key <key>   API key to use (openai provider; or use OPENAI_API_KEY)
+      --api-key <key>   API key/OAuth token to use (openai/copilot providers; or use OPENAI_API_KEY)
       --prompt <text>   Override the prompt template (or use LAZYCOMMIT_PROMPT)
       --apfel           Shorthand for --provider apfel (local Apple model, no network)
       --ollama          Shorthand for --provider openai --base-url http://localhost:11434/v1
@@ -123,6 +123,8 @@ token written by editor Copilot plugins (`copilot.vim` / `copilot.lua`).
 - Token is read from `$COPILOT_HOSTS_FILE` (default
   `~/.config/github-copilot/hosts.json`) or `$COPILOT_APPS_FILE` (default
   `~/.config/github-copilot/apps.json`).
+- `--api-key` / `OPENAI_API_KEY`, if set, is used directly as the OAuth
+  token instead, skipping the hosts/apps file lookup entirely.
 - `--base-url` / `GITHUB_API_URL` overrides the GitHub API root used for the
   OAuth token exchange (useful for GitHub Enterprise). The chat completions
   host itself is taken from the token exchange response.
@@ -161,7 +163,7 @@ Flags always take precedence over environment variables.
 | `--prompt`    | `LAZYCOMMIT_PROMPT`    | Prompt template override (see below)                |
 | `--base-url`  | `GITHUB_API_URL`       | Base URL override for the `copilot` provider         |
 | `--base-url`  | `OPENAI_BASE_URL`      | Base URL override for the `openai` provider          |
-| `--api-key`   | `OPENAI_API_KEY`       | API key for the `openai` provider                    |
+| `--api-key`   | `OPENAI_API_KEY`       | API key for `openai`, or OAuth token for `copilot` (skips hosts/apps file lookup) |
 | —             | `EDITOR`               | Editor used to review the generated message          |
 | —             | `COPILOT_HOSTS_FILE`   | Path to the Copilot OAuth hosts.json file            |
 | —             | `COPILOT_APPS_FILE`    | Path to the Copilot OAuth apps.json file             |

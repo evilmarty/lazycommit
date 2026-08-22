@@ -71,6 +71,29 @@ func TestNewProviderCopilot(t *testing.T) {
 	}
 }
 
+func TestNewProviderCopilotUsesAPIKeyFlag(t *testing.T) {
+	gen, err := NewProvider("copilot", "", "", "explicit-key", envMap(nil))
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	cp := gen.(*provider.CopilotProvider)
+	if cp.APIKey != "explicit-key" {
+		t.Errorf("APIKey = %q, want %q", cp.APIKey, "explicit-key")
+	}
+}
+
+func TestNewProviderCopilotUsesOpenAIAPIKeyEnvFallback(t *testing.T) {
+	env := envMap(map[string]string{"OPENAI_API_KEY": "env-key"})
+	gen, err := NewProvider("copilot", "", "", "", env)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	cp := gen.(*provider.CopilotProvider)
+	if cp.APIKey != "env-key" {
+		t.Errorf("APIKey = %q, want %q", cp.APIKey, "env-key")
+	}
+}
+
 func TestNewProviderCopilotBaseURLFlagWinsOverEnv(t *testing.T) {
 	env := envMap(map[string]string{"GITHUB_API_URL": "https://env.example.com"})
 	gen, err := NewProvider("copilot", "", "https://flag.example.com", "", env)
