@@ -57,6 +57,10 @@ Options:
       --dry-run         Print the generated message without committing
       --help            Show this help message
 
+Any arguments after "--" are passed directly to git commit (e.g.
+"lazycommit -- --no-verify --amend"). Unrecognized arguments before "--"
+are an error.
+
 Prompt template:
   The prompt sent to the LLM provider is a plain-text template that supports
   two placeholders, which are substituted with the staged changes before
@@ -76,13 +80,10 @@ Prompt template:
 
     export LAZYCOMMIT_PROMPT='Summarise these changes in one sentence:
 {{diff}}'
-
-Any arguments after "--" are passed directly to git commit (e.g.
-"lazycommit -- --no-verify --amend"). Unrecognized arguments before "--"
-are an error.
 ```
 
 ### Examples
+
 
 ```sh
 # Stage hunks interactively, then generate and review a message
