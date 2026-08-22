@@ -9,10 +9,11 @@ import (
 
 // Config holds the parsed CLI configuration for a single lazycommit invocation.
 type Config struct {
-	Help   bool
-	DryRun bool
-	Patch  bool
-	NoEdit bool
+	Help    bool
+	Version bool
+	DryRun  bool
+	Patch   bool
+	NoEdit  bool
 
 	Provider string
 	Model    string
@@ -64,6 +65,8 @@ func ParseArgs(args []string) (*Config, []string, error) {
 		switch name {
 		case "--help":
 			cfg.Help = true
+		case "--version":
+			cfg.Version = true
 		case "--dry-run":
 			cfg.DryRun = true
 		case "-p", "--patch":
@@ -143,6 +146,7 @@ Options:
       --lmstudio        Shorthand for --provider openai --base-url http://localhost:1234/v1
       --no-edit         Skip the $EDITOR review step and commit the message as-is
       --dry-run         Print the generated message without committing
+      --version         Show version information
       --help            Show this help message
 
 Any arguments after "--" are passed directly to git commit (e.g.

@@ -22,6 +22,11 @@ func TestParseArgs(t *testing.T) {
 			wantCfg: Config{Help: true},
 		},
 		{
+			name:    "version",
+			args:    []string{"--version"},
+			wantCfg: Config{Version: true},
+		},
+		{
 			name:    "dry run",
 			args:    []string{"--dry-run"},
 			wantCfg: Config{DryRun: true},

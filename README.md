@@ -36,6 +36,15 @@ go build -o lazycommit .
 
 Put the resulting `lazycommit` binary somewhere on your `$PATH`.
 
+To embed a version string (shown by `lazycommit --version`), set it at
+build time via `-ldflags`:
+
+```sh
+go build -ldflags "-X github.com/evilmarty/lazycommit/internal/app.Version=$(git describe --tags --always)" -o lazycommit .
+```
+
+Without this, `--version` reports `dev`.
+
 ## Usage
 
 ```sh
@@ -63,6 +72,7 @@ Options:
       --lmstudio        Shorthand for --provider openai --base-url http://localhost:1234/v1
       --no-edit         Skip the $EDITOR review step and commit the message as-is
       --dry-run         Print the generated message without committing
+      --version         Show version information
       --help            Show this help message
 
 Any arguments after "--" are passed directly to git commit (e.g.
@@ -121,6 +131,9 @@ lazycommit --lmstudio
 
 # Pass extra flags through to `git commit` after "--"
 lazycommit --copilot -- --no-verify --amend
+
+# Print the version and exit
+lazycommit --version
 ```
 
 ## Providers

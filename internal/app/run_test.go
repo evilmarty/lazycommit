@@ -72,6 +72,25 @@ func TestRunViaPublicEntrypoint(t *testing.T) {
 	}
 }
 
+func TestRunVersion(t *testing.T) {
+	oldVersion := Version
+	Version = "1.2.3"
+	defer func() { Version = oldVersion }()
+
+	var stdout, stderr bytes.Buffer
+	code := RunWithDeps([]string{"--version"}, &stdout, &stderr, envMap(nil), Deps{})
+	if code != 0 {
+		t.Fatalf("expected exit 0, got %d", code)
+	}
+	want := "lazycommit 1.2.3\n"
+	if stdout.String() != want {
+		t.Errorf("got %q, want %q", stdout.String(), want)
+	}
+	if stderr.String() != "" {
+		t.Errorf("expected no stderr, got %q", stderr.String())
+	}
+}
+
 func TestOSGetenv(t *testing.T) {
 	t.Setenv("GIT_CC_TEST_VAR", "test-value")
 	if got := OSGetenv("GIT_CC_TEST_VAR"); got != "test-value" {

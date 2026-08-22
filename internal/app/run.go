@@ -38,6 +38,11 @@ func RunWithDeps(args []string, stdout, stderr io.Writer, getenv GetEnv, deps De
 		return 0
 	}
 
+	if cfg.Version {
+		fmt.Fprintf(stdout, "%s %s\n", AppName, Version)
+		return 0
+	}
+
 	git := deps.Git
 	if git == nil {
 		git = &Git{}
