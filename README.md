@@ -36,14 +36,19 @@ go build -o lazycommit .
 
 Put the resulting `lazycommit` binary somewhere on your `$PATH`.
 
-To embed a version string (shown by `lazycommit --version`), set it at
-build time via `-ldflags`:
+To embed version, commit, and build date info (shown by `lazycommit
+--version`), set them at build time via `-ldflags`:
 
 ```sh
-go build -ldflags "-X main.version=$(git describe --tags --always)" -o lazycommit .
+go build -ldflags "\
+  -X main.Version=$(git describe --tags --always) \
+  -X main.Commit=$(git rev-parse HEAD) \
+  -X main.BuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  -o lazycommit .
 ```
 
-Without this, `--version` reports `dev`.
+Without this, `--version` reports `dev`/`none`/`unknown`. Releases built via
+[GoReleaser](.goreleaser.yaml) set these automatically.
 
 ## Usage
 

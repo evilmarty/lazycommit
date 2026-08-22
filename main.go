@@ -12,16 +12,23 @@ import (
 // appName is the display name shown by --version.
 const appName = "lazycommit"
 
-// version is the lazycommit version string, shown by --version. It defaults
-// to "dev" for local/unversioned builds and should be overridden at build
-// time via linker flags, e.g.:
+// Version, Commit, and BuildDate are shown by --version. They default to
+// "dev"/"none"/"unknown" for local/unversioned builds and are overridden at
+// build time via linker flags. GoReleaser (see .goreleaser.yaml) sets these
+// automatically; to do so manually:
 //
-//	go build -ldflags "-X main.version=1.2.3" -o lazycommit .
-var version = "dev"
+//	go build -ldflags "-X main.Version=1.2.3 -X main.Commit=$(git rev-parse HEAD) -X main.BuildDate=$(date -u +%Y-%m-%dT%H:%M:%SZ)" -o lazycommit .
+var (
+	Version   = "dev"
+	Commit    = "none"
+	BuildDate = "unknown"
+)
 
 func main() {
 	os.Exit(app.RunWithDeps(os.Args[1:], os.Stdout, os.Stderr, app.OSGetenv, app.Deps{
-		AppName: appName,
-		Version: version,
+		AppName:   appName,
+		Version:   Version,
+		Commit:    Commit,
+		BuildDate: BuildDate,
 	}))
 }

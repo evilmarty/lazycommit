@@ -17,10 +17,13 @@ type Deps struct {
 	NewProvider func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error)
 	Editor      Editor
 
-	// AppName and Version are shown by --version. They default to
-	// "lazycommit" and "dev" respectively when left empty.
-	AppName string
-	Version string
+	// AppName, Version, Commit, and BuildDate are shown by --version. They
+	// default to "lazycommit", "dev", "none", and "unknown" respectively
+	// when left empty.
+	AppName   string
+	Version   string
+	Commit    string
+	BuildDate string
 }
 
 // Run executes the lazycommit CLI logic given raw args (excluding argv[0]),
@@ -52,7 +55,15 @@ func RunWithDeps(args []string, stdout, stderr io.Writer, getenv GetEnv, deps De
 		if version == "" {
 			version = "dev"
 		}
-		fmt.Fprintf(stdout, "%s %s\n", appName, version)
+		commit := deps.Commit
+		if commit == "" {
+			commit = "none"
+		}
+		buildDate := deps.BuildDate
+		if buildDate == "" {
+			buildDate = "unknown"
+		}
+		fmt.Fprintf(stdout, "%s version %s\ncommit:     %s\nbuilt:      %s\n", appName, version, commit, buildDate)
 		return 0
 	}
 

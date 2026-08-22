@@ -85,13 +85,15 @@ func TestRunViaPublicEntrypoint(t *testing.T) {
 func TestRunVersion(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	code := RunWithDeps([]string{"--version"}, &stdout, &stderr, envMap(nil), Deps{
-		AppName: "lazycommit",
-		Version: "1.2.3",
+		AppName:   "lazycommit",
+		Version:   "1.2.3",
+		Commit:    "abc1234",
+		BuildDate: "2024-01-02T03:04:05Z",
 	})
 	if code != 0 {
 		t.Fatalf("expected exit 0, got %d", code)
 	}
-	want := "lazycommit 1.2.3\n"
+	want := "lazycommit version 1.2.3\ncommit:     abc1234\nbuilt:      2024-01-02T03:04:05Z\n"
 	if stdout.String() != want {
 		t.Errorf("got %q, want %q", stdout.String(), want)
 	}
@@ -106,7 +108,7 @@ func TestRunVersionDefaults(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("expected exit 0, got %d", code)
 	}
-	want := "lazycommit dev\n"
+	want := "lazycommit version dev\ncommit:     none\nbuilt:      unknown\n"
 	if stdout.String() != want {
 		t.Errorf("got %q, want %q", stdout.String(), want)
 	}
