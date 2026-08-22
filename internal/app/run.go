@@ -111,7 +111,8 @@ func RunWithDeps(args []string, stdout, stderr io.Writer, getenv GetEnv, deps De
 	}
 
 	finalMsg := generatedMsg
-	if !cfg.NoEdit {
+	skipEdit := cfg.NoEdit || getenv("EDITOR") == ""
+	if !skipEdit {
 		finalMsg, err = ReviewMessage(generatedMsg, stat, deps.Editor)
 		if err != nil {
 			fmt.Fprintf(stderr, "\u274c  %s\n", err)

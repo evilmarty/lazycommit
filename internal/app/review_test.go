@@ -90,3 +90,18 @@ func TestDefaultEditorInvokesEDITOR(t *testing.T) {
 		t.Fatalf("unexpected error invoking EDITOR=true: %v", err)
 	}
 }
+
+func TestDefaultEditorErrorsWhenEditorUnset(t *testing.T) {
+	t.Setenv("EDITOR", "")
+	tmpFile, err := os.CreateTemp("", "lazycommit-editor-test-*")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	path := tmpFile.Name()
+	tmpFile.Close()
+	defer os.Remove(path)
+
+	if err := defaultEditor(path); err == nil {
+		t.Fatal("expected error when EDITOR is unset, got nil")
+	}
+}

@@ -15,7 +15,7 @@ type Editor func(path string) error
 func defaultEditor(path string) error {
 	editor := os.Getenv("EDITOR")
 	if editor == "" {
-		editor = "nvim"
+		return fmt.Errorf("EDITOR is not set")
 	}
 	cmd := exec.Command(editor, path)
 	cmd.Stdin = os.Stdin

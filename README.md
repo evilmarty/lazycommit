@@ -146,14 +146,15 @@ Flags always take precedence over environment variables.
 | `--base-url`  | `GITHUB_API_URL`       | Base URL override for the `copilot` provider         |
 | `--base-url`  | `OPENAI_BASE_URL`      | Base URL override for the `openai` provider          |
 | —             | `OPENAI_API_KEY`       | API key for the `openai` provider                    |
-| —             | `EDITOR`               | Editor used to review the generated message (defaults to `nvim` if unset) |
+| —             | `EDITOR`               | Editor used to review the generated message          |
 | —             | `COPILOT_HOSTS_FILE`   | Path to the Copilot OAuth hosts.json file            |
 | —             | `COPILOT_APPS_FILE`    | Path to the Copilot OAuth apps.json file             |
 
-> **Note:** If `EDITOR` is unset or empty, `lazycommit` falls back to `nvim`.
-> If `nvim` isn't installed, the review step fails and no commit is created.
-> Use `--no-edit` to skip the review step entirely and commit the generated
-> message as-is, regardless of `EDITOR`.
+> **Note:** If `EDITOR` is unset or empty, the review step is skipped
+> entirely and the generated message is committed as-is, the same as
+> passing `--no-edit`. If `EDITOR` is set but fails to run (e.g. the
+> command doesn't exist), that is still treated as an error and no commit
+> is created.
 
 ### Custom prompt template
 

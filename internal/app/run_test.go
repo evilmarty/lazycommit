@@ -155,7 +155,7 @@ func TestRunNoEditCommitsDirectly(t *testing.T) {
 			return fakeGenerator{msg: "feat: no edit path"}, nil
 		},
 	}
-	code := RunWithDeps([]string{"--no-edit"}, &stdout, &stderr, envMap(nil), deps)
+	code := RunWithDeps([]string{"--no-edit"}, &stdout, &stderr, envMap(map[string]string{"EDITOR": "fake-editor"}), deps)
 	if code != 0 {
 		t.Fatalf("expected exit 0, got %d: stderr=%s", code, stderr.String())
 	}
@@ -165,6 +165,38 @@ func TestRunNoEditCommitsDirectly(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), "Committed:") {
 		t.Errorf("expected commit confirmation, got %q", stdout.String())
+	}
+}
+
+func TestRunEmptyEditorSkipsReviewLikeNoEdit(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	var committedArgs []string
+	editorInvoked := false
+	git := newFakeGit(true, true)
+	git.Interactive = func(args []string) error {
+		committedArgs = args
+		return nil
+	}
+	deps := Deps{
+		Git: git,
+		NewProvider: func(name, model, baseURL string, getenv GetEnv) (provider.Generator, error) {
+			return fakeGenerator{msg: "feat: unset editor"}, nil
+		},
+		Editor: func(path string) error {
+			editorInvoked = true
+			return nil
+		},
+	}
+	code := RunWithDeps(nil, &stdout, &stderr, envMap(nil), deps)
+	if code != 0 {
+		t.Fatalf("expected exit 0, got %d: stderr=%s", code, stderr.String())
+	}
+	if editorInvoked {
+		t.Error("expected editor not to be invoked when EDITOR is unset")
+	}
+	joined := strings.Join(committedArgs, "|")
+	if !strings.Contains(joined, "feat: unset editor") {
+		t.Errorf("expected commit with generated message, got %v", committedArgs)
 	}
 }
 
@@ -185,7 +217,7 @@ func TestRunWithEditorReview(t *testing.T) {
 			return nil // accept generated message unmodified
 		},
 	}
-	code := RunWithDeps(nil, &stdout, &stderr, envMap(nil), deps)
+	code := RunWithDeps(nil, &stdout, &stderr, envMap(map[string]string{"EDITOR": "fake-editor"}), deps)
 	if code != 0 {
 		t.Fatalf("expected exit 0, got %d: stderr=%s", code, stderr.String())
 	}
@@ -206,7 +238,7 @@ func TestRunEditorWipesMessageAborts(t *testing.T) {
 			return os.WriteFile(path, []byte("# only comments\n"), 0o644)
 		},
 	}
-	code := RunWithDeps(nil, &stdout, &stderr, envMap(nil), deps)
+	code := RunWithDeps(nil, &stdout, &stderr, envMap(map[string]string{"EDITOR": "fake-editor"}), deps)
 	if code != 1 {
 		t.Fatalf("expected exit 1, got %d", code)
 	}
