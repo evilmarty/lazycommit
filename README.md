@@ -9,9 +9,9 @@ commits. No more staring at a blank commit message.
 - **Pluggable providers**: GitHub Copilot, OpenAI-compatible Chat
   Completions APIs (including local servers like Ollama and LM Studio), or
   the local [`apfel`](https://github.com/Arthur-Ficial/apfel) on-device
-  model — no network calls required. A provider must be selected explicitly
-  via `--provider`/a shortcut flag or `LAZYCOMMIT_PROVIDER`; there is no
-  default.
+  model (macOS only) — no network calls required. A provider must be
+  selected explicitly via `--provider`/a shortcut flag or
+  `LAZYCOMMIT_PROVIDER`; there is no default.
 - **Editor review by default**: the generated message is pre-populated in
   `$EDITOR` before committing, so you can tweak it. Use `--no-edit` to skip
   the review step and commit as-is.
@@ -67,7 +67,7 @@ Options:
       --api-key <key>   API key/OAuth token to use (openai/copilot providers; or use OPENAI_API_KEY)
       --prompt <text>   Override the prompt template (or use LAZYCOMMIT_PROMPT)
       --copilot         Shorthand for --provider copilot
-      --apfel           Shorthand for --provider apfel (local Apple model, no network)
+      --apfel           Shorthand for --provider apfel (local Apple model, no network; macOS only)
       --ollama          Shorthand for --provider openai --base-url http://localhost:11434/v1
       --lmstudio        Shorthand for --provider openai --base-url http://localhost:1234/v1
       --no-edit         Skip the $EDITOR review step and commit the message as-is
@@ -122,7 +122,7 @@ lazycommit --no-edit --copilot
 # Use OpenAI instead of Copilot
 lazycommit --provider openai --model gpt-4o --api-key sk-...
 
-# Use the local apfel model (no network calls)
+# Use the local apfel model (no network calls, macOS only)
 lazycommit --provider apfel   # or: lazycommit --apfel
 
 # Use a local Ollama or LM Studio server (OpenAI-compatible, no API key needed)
@@ -169,11 +169,17 @@ Uses an OpenAI-compatible Chat Completions API (`/chat/completions`).
   the default endpoint for a local [LM Studio](https://lmstudio.ai) install.
   Use `--model` to select the model loaded in LM Studio/Ollama.
 
-### `apfel`
+### `apfel` (macOS only)
 
 Shells out to the local [`apfel`](https://github.com/Arthur-Ficial/apfel) CLI to run an
 on-device Apple Intelligence model — no network calls, no API key.
 Equivalent to `--provider apfel` or the `--apfel` shorthand.
+
+Only available on macOS: `apfel` and its underlying on-device model are
+Apple-only. `lazycommit` binaries built for other platforms omit the real
+provider implementation entirely (via a Go build constraint), so selecting
+`apfel`/`--apfel` on Linux or Windows fails immediately with a clear error
+instead of trying (and failing) to exec a nonexistent `apfel` binary.
 
 ## Configuration
 
@@ -183,7 +189,7 @@ is **required** — there is no default provider.
 
 | Flag          | Environment variable   | Description                                        |
 |---------------|-------------------------|------------------------------------------------------|
-| `--provider`  | `LAZYCOMMIT_PROVIDER`  | Provider to use: `copilot`, `openai`, or `apfel` (required) |
+| `--provider`  | `LAZYCOMMIT_PROVIDER`  | Provider to use: `copilot`, `openai`, or `apfel` (macOS only) (required) |
 | `--model`     | `LAZYCOMMIT_MODEL`     | Model name (provider-specific default if omitted)   |
 | `--prompt`    | `LAZYCOMMIT_PROMPT`    | Prompt template override (see below)                |
 | `--base-url`  | `GITHUB_API_URL`       | Base URL override for the `copilot` provider         |

@@ -33,7 +33,9 @@ go tool cover -func=coverage.out   # after `-coverprofile=coverage.out`
 
 Always run `gofmt -l .`, `go vet ./...`, and `go test ./... -cover` before
 committing. CI (`.github/workflows/ci.yml`) runs the same checks on every
-push/PR to `main` and will fail the build if formatting, vet, or tests fail.
+push/PR to `main` on a `ubuntu-latest`/`macos-latest` matrix (so the
+macOS-only `apfel` provider is compiled and tested on at least one job)
+and will fail the build if formatting, vet, or tests fail.
 
 ## Conventions
 
@@ -62,6 +64,23 @@ push/PR to `main` and will fail the build if formatting, vet, or tests fail.
   far as user-facing text is concerned.
 - Keep `gofmt`-formatted Go code; don't hand-format around `gofmt`'s
   output.
+- **Platform-gated providers use Go build tags, not runtime `runtime.GOOS`
+  checks.** The `apfel` provider only works on macOS (it shells out to the
+  macOS-only `apfel` CLI), so `provider/apfel.go` (and its test) carry a
+  `//go:build darwin` constraint, and the real vs. stub provider
+  construction is split across `internal/app/apfel_darwin.go`
+  (`//go:build darwin`) and `internal/app/apfel_other.go`
+  (`//go:build !darwin`), both exposing the same `newApfelProvider()`
+  function so `provider_factory.go` stays platform-agnostic. Follow this
+  pattern for any future OS-specific provider: keep the CLI flag parsing
+  platform-agnostic (so unsupported platforms get a friendly error, not an
+  "unknown argument"), and gate only the actual implementation/type via
+  build constraints, with a same-named function/type stub on excluded
+  platforms and tests split into matching `_darwin_test.go`/`_other_test.go`
+  files. Verify cross-platform changes with `GOOS=linux go build ./...`,
+  `GOOS=windows go build ./...`, and their `go vet` equivalents, since this
+  repo's CI matrix (`ubuntu-latest`, `macos-latest`) only covers two of the
+  possible target platforms.
 
 ## Documentation sync
 

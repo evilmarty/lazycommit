@@ -1,3 +1,10 @@
+//go:build darwin
+
+// The apfel provider shells out to the `apfel` CLI, which runs an on-device
+// Apple Intelligence model and is only available on macOS. This file (and
+// its test) are therefore restricted to darwin builds; non-darwin builds
+// use the stub in internal/app/apfel_other.go instead.
+
 package provider
 
 import (

@@ -139,16 +139,6 @@ func TestNewProviderOpenAIAPIKeyFlagWinsOverEnv(t *testing.T) {
 	}
 }
 
-func TestNewProviderApfel(t *testing.T) {
-	gen, err := NewProvider("apfel", "", "", "", envMap(nil))
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if _, ok := gen.(*provider.ApfelProvider); !ok {
-		t.Fatalf("expected *provider.ApfelProvider, got %T", gen)
-	}
-}
-
 func TestNewProviderUnknown(t *testing.T) {
 	if _, err := NewProvider("bogus", "", "", "", envMap(nil)); err == nil {
 		t.Fatal("expected error for unknown provider")

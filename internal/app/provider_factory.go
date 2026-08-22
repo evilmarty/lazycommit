@@ -92,10 +92,7 @@ func NewProvider(name, model, baseURL, apiKey string, getenv GetEnv) (provider.G
 			Temperature: 0.2,
 		}, nil
 	case "apfel":
-		return &provider.ApfelProvider{
-			MaxTokens:   256,
-			Temperature: 0.8,
-		}, nil
+		return newApfelProvider()
 	default:
 		return nil, fmt.Errorf("unknown provider %q (expected copilot, openai, or apfel)", name)
 	}

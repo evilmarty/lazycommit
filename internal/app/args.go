@@ -141,7 +141,7 @@ Options:
       --api-key <key>   API key/OAuth token to use (openai/copilot providers; or use OPENAI_API_KEY)
       --prompt <text>   Override the prompt template (or use LAZYCOMMIT_PROMPT)
       --copilot         Shorthand for --provider copilot
-      --apfel           Shorthand for --provider apfel (local Apple model, no network)
+      --apfel           Shorthand for --provider apfel (local Apple model, no network; macOS only)
       --ollama          Shorthand for --provider openai --base-url http://localhost:11434/v1
       --lmstudio        Shorthand for --provider openai --base-url http://localhost:1234/v1
       --no-edit         Skip the $EDITOR review step and commit the message as-is
