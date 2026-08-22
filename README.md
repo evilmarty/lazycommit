@@ -1,8 +1,10 @@
 # lazycommit
 
 `lazycommit` auto-generates a git commit message from your staged diff
-using a pluggable LLM provider, lets you review it in `$EDITOR`, then
-commits. No more staring at a blank commit message.
+using a pluggable LLM provider then commits. No more staring at a
+blank commit message.
+
+![demo](assets/demo.gif)
 
 ## Features
 
@@ -202,6 +204,7 @@ Apple-only. `lazycommit` binaries built for other platforms omit the real
 provider implementation entirely (via a Go build constraint), so selecting
 `apfel`/`--apfel` on Linux or Windows fails immediately with a clear error
 instead of trying (and failing) to exec a nonexistent `apfel` binary.
+
 - Does not support `--list-models` (it has no concept of a model catalog
   — it just talks to whatever on-device model `apfel` provides); using
   `--list-models --apfel`/`--list-models --provider apfel` is an error.
@@ -291,15 +294,19 @@ Contributions are welcome! To submit a change:
 1. Fork the repository and create a topic branch off `main`.
 2. Make your changes, keeping them focused and scoped to a single concern.
 3. Format and vet your code:
+
    ```sh
    gofmt -l .
    go vet ./...
    ```
+
 4. Add or update tests for any behavior you change, and make sure the suite
    passes with coverage still at or above 90%:
+
    ```sh
    go test ./... -cover
    ```
+
 5. Update the README or other docs if you change user-facing behavior
    (flags, environment variables, providers, etc.).
 6. Commit with a clear, descriptive message and open a pull request
