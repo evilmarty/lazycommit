@@ -109,7 +109,7 @@ func TestRunDryRun(t *testing.T) {
 			return fakeGenerator{msg: "feat: add cool thing"}, nil
 		},
 	}
-	code := RunWithDeps([]string{"--dry-run"}, &stdout, &stderr, envMap(nil), deps)
+	code := RunWithDeps([]string{"--dry-run", "--copilot"}, &stdout, &stderr, envMap(nil), deps)
 	if code != 0 {
 		t.Fatalf("expected exit 0, got %d: stderr=%s", code, stderr.String())
 	}
@@ -132,7 +132,7 @@ func TestRunEmptyGeneratedMessageFallsBackToCommit(t *testing.T) {
 			return fakeGenerator{msg: ""}, nil
 		},
 	}
-	code := RunWithDeps(nil, &stdout, &stderr, envMap(nil), deps)
+	code := RunWithDeps([]string{"--copilot"}, &stdout, &stderr, envMap(nil), deps)
 	if code != 0 {
 		t.Fatalf("expected exit 0, got %d: stderr=%s", code, stderr.String())
 	}
@@ -155,7 +155,7 @@ func TestRunNoEditCommitsDirectly(t *testing.T) {
 			return fakeGenerator{msg: "feat: no edit path"}, nil
 		},
 	}
-	code := RunWithDeps([]string{"--no-edit"}, &stdout, &stderr, envMap(map[string]string{"EDITOR": "fake-editor"}), deps)
+	code := RunWithDeps([]string{"--no-edit", "--copilot"}, &stdout, &stderr, envMap(map[string]string{"EDITOR": "fake-editor"}), deps)
 	if code != 0 {
 		t.Fatalf("expected exit 0, got %d: stderr=%s", code, stderr.String())
 	}
@@ -187,7 +187,7 @@ func TestRunEmptyEditorSkipsReviewLikeNoEdit(t *testing.T) {
 			return nil
 		},
 	}
-	code := RunWithDeps(nil, &stdout, &stderr, envMap(nil), deps)
+	code := RunWithDeps([]string{"--copilot"}, &stdout, &stderr, envMap(nil), deps)
 	if code != 0 {
 		t.Fatalf("expected exit 0, got %d: stderr=%s", code, stderr.String())
 	}
@@ -217,7 +217,7 @@ func TestRunWithEditorReview(t *testing.T) {
 			return nil // accept generated message unmodified
 		},
 	}
-	code := RunWithDeps(nil, &stdout, &stderr, envMap(map[string]string{"EDITOR": "fake-editor"}), deps)
+	code := RunWithDeps([]string{"--copilot"}, &stdout, &stderr, envMap(map[string]string{"EDITOR": "fake-editor"}), deps)
 	if code != 0 {
 		t.Fatalf("expected exit 0, got %d: stderr=%s", code, stderr.String())
 	}
@@ -238,7 +238,7 @@ func TestRunEditorWipesMessageAborts(t *testing.T) {
 			return os.WriteFile(path, []byte("# only comments\n"), 0o644)
 		},
 	}
-	code := RunWithDeps(nil, &stdout, &stderr, envMap(map[string]string{"EDITOR": "fake-editor"}), deps)
+	code := RunWithDeps([]string{"--copilot"}, &stdout, &stderr, envMap(map[string]string{"EDITOR": "fake-editor"}), deps)
 	if code != 1 {
 		t.Fatalf("expected exit 1, got %d", code)
 	}
@@ -255,7 +255,7 @@ func TestRunGeneratorError(t *testing.T) {
 			return fakeGenerator{err: errors.New("network down")}, nil
 		},
 	}
-	code := RunWithDeps(nil, &stdout, &stderr, envMap(nil), deps)
+	code := RunWithDeps([]string{"--copilot"}, &stdout, &stderr, envMap(nil), deps)
 	if code != 1 {
 		t.Fatalf("expected exit 1, got %d", code)
 	}
@@ -272,7 +272,7 @@ func TestRunUnknownProviderError(t *testing.T) {
 			return nil, errors.New("unknown provider")
 		},
 	}
-	code := RunWithDeps(nil, &stdout, &stderr, envMap(nil), deps)
+	code := RunWithDeps([]string{"--provider", "bogus"}, &stdout, &stderr, envMap(nil), deps)
 	if code != 1 {
 		t.Fatalf("expected exit 1, got %d", code)
 	}
@@ -295,7 +295,7 @@ func TestRunPatchFlagInvokesAddPatch(t *testing.T) {
 		},
 		Editor: func(path string) error { return nil },
 	}
-	code := RunWithDeps([]string{"-p"}, &stdout, &stderr, envMap(nil), deps)
+	code := RunWithDeps([]string{"-p", "--copilot"}, &stdout, &stderr, envMap(nil), deps)
 	if code != 0 {
 		t.Fatalf("expected exit 0, got %d: stderr=%s", code, stderr.String())
 	}
@@ -309,5 +309,43 @@ func TestRunParseArgsError(t *testing.T) {
 	code := RunWithDeps([]string{"--provider"}, &stdout, &stderr, envMap(nil), Deps{})
 	if code != 1 {
 		t.Fatalf("expected exit 1, got %d", code)
+	}
+}
+
+func TestRunNoProviderSpecifiedError(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	deps := Deps{
+		Git: newFakeGit(true, true),
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+			t.Fatal("NewProvider should not be called when no provider is specified")
+			return nil, nil
+		},
+	}
+	code := RunWithDeps(nil, &stdout, &stderr, envMap(nil), deps)
+	if code != 1 {
+		t.Fatalf("expected exit 1, got %d", code)
+	}
+	if !strings.Contains(stderr.String(), "No provider specified") {
+		t.Errorf("got stderr %q", stderr.String())
+	}
+}
+
+func TestRunProviderFromEnvVar(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	deps := Deps{
+		Git: newFakeGit(true, true),
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+			if name != "apfel" {
+				t.Errorf("expected provider %q, got %q", "apfel", name)
+			}
+			return fakeGenerator{msg: "feat: via env provider"}, nil
+		},
+	}
+	code := RunWithDeps([]string{"--dry-run"}, &stdout, &stderr, envMap(map[string]string{"LAZYCOMMIT_PROVIDER": "apfel"}), deps)
+	if code != 0 {
+		t.Fatalf("expected exit 0, got %d: stderr=%s", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "feat: via env provider") {
+		t.Errorf("got stdout %q", stdout.String())
 	}
 }

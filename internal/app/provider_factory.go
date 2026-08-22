@@ -9,8 +9,6 @@ import (
 )
 
 const (
-	DefaultProvider = "copilot"
-
 	// OllamaDefaultBaseURL is the default OpenAI-compatible endpoint
 	// exposed by a local Ollama installation.
 	OllamaDefaultBaseURL = "http://localhost:11434/v1"
@@ -24,15 +22,13 @@ const (
 type GetEnv func(string) string
 
 // ResolveProvider determines the effective provider name from the flag,
-// falling back to LAZYCOMMIT_PROVIDER, then DefaultProvider.
+// falling back to LAZYCOMMIT_PROVIDER. Returns "" if neither is set,
+// meaning no provider was specified.
 func ResolveProvider(flagValue string, getenv GetEnv) string {
 	if flagValue != "" {
 		return flagValue
 	}
-	if v := getenv("LAZYCOMMIT_PROVIDER"); v != "" {
-		return v
-	}
-	return DefaultProvider
+	return getenv("LAZYCOMMIT_PROVIDER")
 }
 
 // ResolveModel determines the effective model name from the flag, falling
@@ -63,7 +59,7 @@ func NewProvider(name, model, baseURL, apiKey string, getenv GetEnv) (provider.G
 	}
 
 	switch name {
-	case "copilot", "":
+	case "copilot":
 		hostsFile := getenv("COPILOT_HOSTS_FILE")
 		if hostsFile == "" {
 			hostsFile = filepath.Join(homeDir(getenv), ".config", "github-copilot", "hosts.json")

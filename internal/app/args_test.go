@@ -47,6 +47,11 @@ func TestParseArgs(t *testing.T) {
 			wantCfg: Config{Provider: "apfel"},
 		},
 		{
+			name:    "copilot shorthand",
+			args:    []string{"--copilot"},
+			wantCfg: Config{Provider: "copilot"},
+		},
+		{
 			name:    "ollama shorthand",
 			args:    []string{"--ollama"},
 			wantCfg: Config{Provider: "openai", BaseURL: OllamaDefaultBaseURL},

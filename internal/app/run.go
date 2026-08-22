@@ -76,6 +76,10 @@ func RunWithDeps(args []string, stdout, stderr io.Writer, getenv GetEnv, deps De
 	}
 
 	providerName := ResolveProvider(cfg.Provider, getenv)
+	if providerName == "" {
+		fmt.Fprintln(stderr, "\u274c  No provider specified. Use --provider <name>, a shortcut flag (--copilot, --apfel, --ollama, --lmstudio), or set LAZYCOMMIT_PROVIDER.")
+		return 1
+	}
 	model := ResolveModel(cfg.Model, getenv)
 	promptTemplate := ResolvePrompt(cfg.Prompt, getenv)
 	prompt := BuildPrompt(promptTemplate, diff, stat)

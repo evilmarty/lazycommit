@@ -17,8 +17,8 @@ func TestResolveProvider(t *testing.T) {
 	if got := ResolveProvider("", envMap(map[string]string{"LAZYCOMMIT_PROVIDER": "apfel"})); got != "apfel" {
 		t.Errorf("expected env var, got %q", got)
 	}
-	if got := ResolveProvider("", envMap(nil)); got != DefaultProvider {
-		t.Errorf("expected default provider, got %q", got)
+	if got := ResolveProvider("", envMap(nil)); got != "" {
+		t.Errorf("expected empty string when no provider specified, got %q", got)
 	}
 }
 

@@ -73,6 +73,9 @@ func ParseArgs(args []string) (*Config, []string, error) {
 		case "--apfel":
 			// Shorthand for --provider apfel.
 			cfg.Provider = "apfel"
+		case "--copilot":
+			// Shorthand for --provider copilot.
+			cfg.Provider = "copilot"
 		case "--ollama":
 			// Shorthand for --provider openai --base-url <ollama endpoint>.
 			cfg.Provider = "openai"
@@ -123,16 +126,18 @@ func ParseArgs(args []string) (*Config, []string, error) {
 func Usage() string {
 	return `Usage: lazycommit [options] [-- git-commit-flags]
 
-Auto-generates a commit message using an LLM provider (Copilot by default),
-pre-populates $EDITOR for review, then commits.
+Auto-generates a commit message using an LLM provider, pre-populates
+$EDITOR for review, then commits. A provider must be specified via
+--provider, a shortcut flag, or LAZYCOMMIT_PROVIDER.
 
 Options:
   -p, --patch          Interactively stage hunks via git add -p before committing
-      --provider <p>    Provider to use: copilot (default), openai, apfel
+      --provider <p>    Provider to use: copilot, openai, apfel (or use LAZYCOMMIT_PROVIDER)
       --model <m>       Model name to use (provider-specific default if omitted)
       --base-url <url>  Override the API base URL (copilot/openai providers)
       --api-key <key>   API key/OAuth token to use (openai/copilot providers; or use OPENAI_API_KEY)
       --prompt <text>   Override the prompt template (or use LAZYCOMMIT_PROMPT)
+      --copilot         Shorthand for --provider copilot
       --apfel           Shorthand for --provider apfel (local Apple model, no network)
       --ollama          Shorthand for --provider openai --base-url http://localhost:11434/v1
       --lmstudio        Shorthand for --provider openai --base-url http://localhost:1234/v1
