@@ -57,6 +57,26 @@ Options:
       --dry-run         Print the generated message without committing
       --help            Show this help message
 
+Prompt template:
+  The prompt sent to the LLM provider is a plain-text template that supports
+  two placeholders, which are substituted with the staged changes before
+  the request is sent:
+    {{diff}}   the "git diff --cached" output
+    {{stat}}   the "git diff --cached --stat" output
+
+  A sensible default template asking for a Conventional Commits-style
+  message is built in. Override it with --prompt "<template>" or by setting
+  LAZYCOMMIT_PROMPT (the flag takes precedence over the env var). Both
+  accept the full template text, e.g.:
+
+    lazycommit --prompt 'Write a one-line commit message for this diff:
+{{diff}}'
+
+  or, for a persistent override:
+
+    export LAZYCOMMIT_PROMPT='Summarise these changes in one sentence:
+{{diff}}'
+
 Any arguments after "--" are passed directly to git commit (e.g.
 "lazycommit -- --no-verify --amend"). Unrecognized arguments before "--"
 are an error.
@@ -135,6 +155,14 @@ The prompt template supports two placeholders:
 
 - `{{stat}}` — substituted with `git diff --cached --stat`
 - `{{diff}}` — substituted with the staged diff (truncated to 300 lines)
+
+Override the built-in template with `--prompt` or `LAZYCOMMIT_PROMPT`
+(the flag takes precedence):
+
+```sh
+lazycommit --prompt 'Write a one-line commit message for this diff:
+{{diff}}'
+```
 
 ```sh
 export LAZYCOMMIT_PROMPT='Write a one-line commit message for this diff:
