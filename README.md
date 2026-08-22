@@ -22,6 +22,14 @@ commits. No more staring at a blank commit message.
 
 ## Installation
 
+With Homebrew (macOS/Linux):
+
+```sh
+brew install evilmarty/tap/lazycommit
+```
+
+Or with `go install`:
+
 ```sh
 go install github.com/evilmarty/lazycommit@latest
 ```
