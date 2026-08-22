@@ -82,9 +82,6 @@ Whenever CLI flags, environment variables, or provider behavior change:
 
 - Write clear, descriptive commit messages explaining the "why", not just
   the "what".
-- Include the trailer `Co-authored-by: Copilot
-  <223556219+Copilot@users.noreply.github.com>` on commits made by an AI
-  agent, unless explicitly told not to.
 - Keep commits focused and scoped to a single concern; avoid bundling
   unrelated changes.
 
