@@ -40,7 +40,7 @@ To embed a version string (shown by `lazycommit --version`), set it at
 build time via `-ldflags`:
 
 ```sh
-go build -ldflags "-X github.com/evilmarty/lazycommit/internal/app.Version=$(git describe --tags --always)" -o lazycommit .
+go build -ldflags "-X main.version=$(git describe --tags --always)" -o lazycommit .
 ```
 
 Without this, `--version` reports `dev`.
