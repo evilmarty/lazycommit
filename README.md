@@ -7,7 +7,8 @@ commits. No more staring at a blank commit message.
 ## Features
 
 - **Pluggable providers**: GitHub Copilot (default), OpenAI-compatible Chat
-  Completions APIs, or the local [`apfel`](https://github.com/Arthur-Ficial/apfel) on-device
+  Completions APIs (including local servers like Ollama and LM Studio), or
+  the local [`apfel`](https://github.com/Arthur-Ficial/apfel) on-device
   model — no network calls required.
 - **Editor review by default**: the generated message is pre-populated in
   `$EDITOR` before committing, so you can tweak it. Use `--no-edit` to skip
@@ -53,6 +54,8 @@ Options:
       --base-url <url>  Override the API base URL (copilot/openai providers)
       --prompt <text>   Override the prompt template (or use LAZYCOMMIT_PROMPT)
       --apfel           Shorthand for --provider apfel (local Apple model, no network)
+      --ollama          Shorthand for --provider openai --base-url http://localhost:11434/v1
+      --lmstudio        Shorthand for --provider openai --base-url http://localhost:1234/v1
       --no-edit         Skip the $EDITOR review step and commit the message as-is
       --dry-run         Print the generated message without committing
       --help            Show this help message
@@ -101,6 +104,10 @@ lazycommit --provider openai --model gpt-4o
 # Use the local apfel model (no network calls)
 lazycommit --provider apfel   # or: lazycommit --apfel
 
+# Use a local Ollama or LM Studio server (OpenAI-compatible, no API key needed)
+lazycommit --ollama
+lazycommit --lmstudio
+
 # Pass extra flags through to `git commit` after "--"
 lazycommit -- --no-verify --amend
 ```
@@ -123,10 +130,17 @@ token written by editor Copilot plugins (`copilot.vim` / `copilot.lua`).
 
 Uses an OpenAI-compatible Chat Completions API (`/chat/completions`).
 
-- Requires `OPENAI_API_KEY`.
+- Requires `OPENAI_API_KEY` when using the default OpenAI endpoint. An API
+  key is not required for a custom `--base-url` (e.g. local servers like
+  Ollama or LM Studio, which typically don't check it).
 - `--base-url` / `OPENAI_BASE_URL` overrides the API base (default
   `https://api.openai.com/v1`), so any OpenAI-compatible endpoint works.
 - `--model` selects the model (default `gpt-4o`).
+- `--ollama` is shorthand for `--provider openai --base-url http://localhost:11434/v1`,
+  the default endpoint for a local [Ollama](https://ollama.com) install.
+- `--lmstudio` is shorthand for `--provider openai --base-url http://localhost:1234/v1`,
+  the default endpoint for a local [LM Studio](https://lmstudio.ai) install.
+  Use `--model` to select the model loaded in LM Studio/Ollama.
 
 ### `apfel`
 

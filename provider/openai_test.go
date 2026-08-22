@@ -51,6 +51,36 @@ func TestOpenAIProviderMissingAPIKey(t *testing.T) {
 	}
 }
 
+func TestOpenAIProviderNoAPIKeyRequiredForCustomBaseURL(t *testing.T) {
+	var gotAuth string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuth = r.Header.Get("Authorization")
+		resp := chatCompletionResponse{}
+		resp.Choices = append(resp.Choices, struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		}{})
+		resp.Choices[0].Message.Content = "feat: local model"
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer server.Close()
+
+	// Simulates --ollama/--lmstudio: no API key needed for a local,
+	// non-default base URL.
+	p := &OpenAIProvider{BaseURL: server.URL}
+	got, err := p.Generate(context.Background(), "prompt")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != "feat: local model" {
+		t.Errorf("got %q", got)
+	}
+	if gotAuth != "" {
+		t.Errorf("expected no Authorization header, got %q", gotAuth)
+	}
+}
+
 func TestOpenAIProviderErrorStatus(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)

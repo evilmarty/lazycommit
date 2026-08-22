@@ -8,7 +8,17 @@ import (
 	"github.com/evilmarty/lazycommit/provider"
 )
 
-const DefaultProvider = "copilot"
+const (
+	DefaultProvider = "copilot"
+
+	// OllamaDefaultBaseURL is the default OpenAI-compatible endpoint
+	// exposed by a local Ollama installation.
+	OllamaDefaultBaseURL = "http://localhost:11434/v1"
+
+	// LMStudioDefaultBaseURL is the default OpenAI-compatible endpoint
+	// exposed by a local LM Studio installation.
+	LMStudioDefaultBaseURL = "http://localhost:1234/v1"
+)
 
 // GetEnv abstracts environment variable lookup, primarily for testability.
 type GetEnv func(string) string

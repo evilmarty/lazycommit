@@ -48,7 +48,7 @@ func (p *OpenAIProvider) model() string {
 
 // Generate implements Generator.
 func (p *OpenAIProvider) Generate(ctx context.Context, prompt string) (string, error) {
-	if p.APIKey == "" {
+	if p.APIKey == "" && p.baseURL() == OpenAIDefaultBaseURL {
 		return "", fmt.Errorf("OPENAI_API_KEY is not set")
 	}
 
@@ -68,7 +68,9 @@ func (p *OpenAIProvider) Generate(ctx context.Context, prompt string) (string, e
 		return "", err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+p.APIKey)
+	if p.APIKey != "" {
+		req.Header.Set("Authorization", "Bearer "+p.APIKey)
+	}
 
 	resp, err := p.httpClient().Do(req)
 	if err != nil {

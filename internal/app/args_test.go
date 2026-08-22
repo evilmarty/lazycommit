@@ -47,6 +47,16 @@ func TestParseArgs(t *testing.T) {
 			wantCfg: Config{Provider: "apfel"},
 		},
 		{
+			name:    "ollama shorthand",
+			args:    []string{"--ollama"},
+			wantCfg: Config{Provider: "openai", BaseURL: OllamaDefaultBaseURL},
+		},
+		{
+			name:    "lmstudio shorthand",
+			args:    []string{"--lmstudio"},
+			wantCfg: Config{Provider: "openai", BaseURL: LMStudioDefaultBaseURL},
+		},
+		{
 			name:    "provider space value",
 			args:    []string{"--provider", "openai"},
 			wantCfg: Config{Provider: "openai"},

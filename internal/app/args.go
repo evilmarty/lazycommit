@@ -72,6 +72,14 @@ func ParseArgs(args []string) (*Config, []string, error) {
 		case "--apfel":
 			// Shorthand for --provider apfel.
 			cfg.Provider = "apfel"
+		case "--ollama":
+			// Shorthand for --provider openai --base-url <ollama endpoint>.
+			cfg.Provider = "openai"
+			cfg.BaseURL = OllamaDefaultBaseURL
+		case "--lmstudio":
+			// Shorthand for --provider openai --base-url <lm studio endpoint>.
+			cfg.Provider = "openai"
+			cfg.BaseURL = LMStudioDefaultBaseURL
 		case "--provider":
 			v, err := takeValue(name)
 			if err != nil {
@@ -118,6 +126,8 @@ Options:
       --base-url <url>  Override the API base URL (copilot/openai providers)
       --prompt <text>   Override the prompt template (or use LAZYCOMMIT_PROMPT)
       --apfel           Shorthand for --provider apfel (local Apple model, no network)
+      --ollama          Shorthand for --provider openai --base-url http://localhost:11434/v1
+      --lmstudio        Shorthand for --provider openai --base-url http://localhost:1234/v1
       --no-edit         Skip the $EDITOR review step and commit the message as-is
       --dry-run         Print the generated message without committing
       --help            Show this help message
