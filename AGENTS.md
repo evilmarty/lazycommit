@@ -17,8 +17,11 @@ Key packages:
 - `internal/cmdrunner` — thin wrapper around exec'ing external commands
   (git, `$EDITOR`, `apfel`), to keep `run.go` testable.
 - `provider` — one file per LLM provider (`copilot.go`, `openai.go`,
-  `apfel.go`), all implementing a common `Provider` interface
-  (`provider.go`).
+  `apfel.go`), all implementing the `Generator` interface (`provider.go`).
+  Providers that can list their available models (currently `copilot` and
+  `openai`) additionally implement the optional `ModelLister` interface
+  (used by `--list-models`); `apfel` intentionally does not implement it,
+  since it has no concept of a selectable model catalog.
 
 ## Build, test, and lint
 

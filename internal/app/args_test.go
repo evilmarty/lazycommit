@@ -32,6 +32,11 @@ func TestParseArgs(t *testing.T) {
 			wantCfg: Config{DryRun: true},
 		},
 		{
+			name:    "list models",
+			args:    []string{"--list-models"},
+			wantCfg: Config{ListModels: true},
+		},
+		{
 			name:    "patch short",
 			args:    []string{"-p"},
 			wantCfg: Config{Patch: true},

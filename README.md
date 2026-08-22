@@ -72,6 +72,7 @@ Options:
       --lmstudio        Shorthand for --provider openai --base-url http://localhost:1234/v1
       --no-edit         Skip the $EDITOR review step and commit the message as-is
       --dry-run         Print the generated message without committing
+      --list-models     List available models for the resolved provider and exit (copilot/openai only)
       --version         Show version information
       --help            Show this help message
 
@@ -132,6 +133,10 @@ lazycommit --lmstudio
 # Pass extra flags through to `git commit` after "--"
 lazycommit --copilot -- --no-verify --amend
 
+# List the models available for the resolved provider (copilot/openai only)
+lazycommit --list-models --copilot
+lazycommit --list-models --provider openai --api-key sk-...
+
 # Print the version and exit
 lazycommit --version
 ```
@@ -151,6 +156,8 @@ token written by editor Copilot plugins (`copilot.vim` / `copilot.lua`).
 - `--base-url` / `GITHUB_API_URL` overrides the GitHub API root used for the
   OAuth token exchange (useful for GitHub Enterprise). The chat completions
   host itself is taken from the token exchange response.
+- Supports `--list-models` to list the models available to your Copilot
+  plan/entitlements.
 
 ### `openai`
 
@@ -168,6 +175,8 @@ Uses an OpenAI-compatible Chat Completions API (`/chat/completions`).
 - `--lmstudio` is shorthand for `--provider openai --base-url http://localhost:1234/v1`,
   the default endpoint for a local [LM Studio](https://lmstudio.ai) install.
   Use `--model` to select the model loaded in LM Studio/Ollama.
+- Supports `--list-models` to list the models available at the resolved
+  base URL (useful for discovering what's loaded in Ollama/LM Studio).
 
 ### `apfel` (macOS only)
 
@@ -180,6 +189,9 @@ Apple-only. `lazycommit` binaries built for other platforms omit the real
 provider implementation entirely (via a Go build constraint), so selecting
 `apfel`/`--apfel` on Linux or Windows fails immediately with a clear error
 instead of trying (and failing) to exec a nonexistent `apfel` binary.
+- Does not support `--list-models` (it has no concept of a model catalog
+  — it just talks to whatever on-device model `apfel` provides); using
+  `--list-models --apfel`/`--list-models --provider apfel` is an error.
 
 ## Configuration
 

@@ -328,3 +328,131 @@ func TestCopilotProviderNoTokenFilesConfigured(t *testing.T) {
 		t.Fatal("expected error when no hosts/apps file configured")
 	}
 }
+
+func TestCopilotProviderListModelsSuccess(t *testing.T) {
+	dir := t.TempDir()
+	hostsFile := writeHostsFile(t, dir, "hosts.json", "oauth-token-123")
+
+	var modelsServer *httptest.Server
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := map[string]any{
+			"token":     "api-token-456",
+			"endpoints": map[string]string{"api": modelsServer.URL},
+		}
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer tokenServer.Close()
+
+	modelsServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/models" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+		if r.Header.Get("Authorization") != "Bearer api-token-456" {
+			t.Errorf("unexpected auth header: %s", r.Header.Get("Authorization"))
+		}
+		json.NewEncoder(w).Encode(modelsResponse{
+			Data: []struct {
+				ID string `json:"id"`
+			}{{ID: "gpt-4o"}, {ID: "gpt-4.1"}},
+		})
+	}))
+	defer modelsServer.Close()
+
+	p := &CopilotProvider{
+		APIBaseURL: tokenServer.URL,
+		HostsFile:  hostsFile,
+	}
+
+	got, err := p.ListModels(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := []string{"gpt-4.1", "gpt-4o"}
+	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+		t.Errorf("got %v, want %v", got, want)
+	}
+}
+
+func TestCopilotProviderListModelsOAuthTokenError(t *testing.T) {
+	p := &CopilotProvider{}
+	if _, err := p.ListModels(context.Background()); err == nil {
+		t.Fatal("expected error when no hosts/apps file configured")
+	}
+}
+
+func TestCopilotProviderListModelsHTTPError(t *testing.T) {
+	dir := t.TempDir()
+	hostsFile := writeHostsFile(t, dir, "hosts.json", "oauth-token")
+
+	var modelsServer *httptest.Server
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := map[string]any{
+			"token":     "api-token",
+			"endpoints": map[string]string{"api": modelsServer.URL},
+		}
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer tokenServer.Close()
+
+	modelsServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer modelsServer.Close()
+
+	p := &CopilotProvider{
+		APIBaseURL: tokenServer.URL,
+		HostsFile:  hostsFile,
+	}
+
+	if _, err := p.ListModels(context.Background()); err == nil {
+		t.Fatal("expected error for non-2xx models response")
+	}
+}
+
+func TestCopilotProviderListModelsInvalidJSON(t *testing.T) {
+	dir := t.TempDir()
+	hostsFile := writeHostsFile(t, dir, "hosts.json", "oauth-token")
+
+	var modelsServer *httptest.Server
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		resp := map[string]any{
+			"token":     "api-token",
+			"endpoints": map[string]string{"api": modelsServer.URL},
+		}
+		json.NewEncoder(w).Encode(resp)
+	}))
+	defer tokenServer.Close()
+
+	modelsServer = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("not json"))
+	}))
+	defer modelsServer.Close()
+
+	p := &CopilotProvider{
+		APIBaseURL: tokenServer.URL,
+		HostsFile:  hostsFile,
+	}
+
+	if _, err := p.ListModels(context.Background()); err == nil {
+		t.Fatal("expected error for invalid JSON models response")
+	}
+}
+
+func TestCopilotProviderListModelsExchangeTokenError(t *testing.T) {
+	dir := t.TempDir()
+	hostsFile := writeHostsFile(t, dir, "hosts.json", "oauth-token")
+
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	defer tokenServer.Close()
+
+	p := &CopilotProvider{
+		APIBaseURL: tokenServer.URL,
+		HostsFile:  hostsFile,
+	}
+
+	if _, err := p.ListModels(context.Background()); err == nil {
+		t.Fatal("expected error when token exchange fails")
+	}
+}

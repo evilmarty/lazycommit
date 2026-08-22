@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strings"
 )
 
@@ -44,6 +45,49 @@ func (p *OpenAIProvider) model() string {
 		return p.Model
 	}
 	return OpenAIDefaultModel
+}
+
+// ListModels implements ModelLister, returning the model IDs available via
+// the GET /models endpoint.
+func (p *OpenAIProvider) ListModels(ctx context.Context) ([]string, error) {
+	if p.APIKey == "" && p.baseURL() == OpenAIDefaultBaseURL {
+		return nil, fmt.Errorf("OPENAI_API_KEY is not set")
+	}
+
+	url := p.baseURL() + "/models"
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	if p.APIKey != "" {
+		req.Header.Set("Authorization", "Bearer "+p.APIKey)
+	}
+
+	resp, err := p.httpClient().Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("openai models request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("openai models API returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var parsed modelsResponse
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		return nil, fmt.Errorf("unexpected response from OpenAI models API: %w", err)
+	}
+
+	models := make([]string, 0, len(parsed.Data))
+	for _, m := range parsed.Data {
+		models = append(models, m.ID)
+	}
+	sort.Strings(models)
+	return models, nil
 }
 
 // Generate implements Generator.

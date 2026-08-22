@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -183,6 +184,55 @@ type chatCompletionResponse struct {
 			Content string `json:"content"`
 		} `json:"message"`
 	} `json:"choices"`
+}
+
+// ListModels implements ModelLister, returning the model IDs available via
+// the Copilot chat API's GET /models endpoint.
+func (p *CopilotProvider) ListModels(ctx context.Context) ([]string, error) {
+	oauthToken, err := p.oauthToken()
+	if err != nil {
+		return nil, err
+	}
+
+	apiToken, chatBaseURL, err := p.exchangeToken(ctx, oauthToken)
+	if err != nil {
+		return nil, err
+	}
+
+	url := strings.TrimRight(chatBaseURL, "/") + "/models"
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+apiToken)
+	req.Header.Set("Editor-Version", editorVersion)
+	req.Header.Set("Copilot-Integration-Id", integrationID)
+
+	resp, err := p.httpClient().Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("copilot models API request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("copilot models API returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var parsed modelsResponse
+	if err := json.Unmarshal(body, &parsed); err != nil {
+		return nil, fmt.Errorf("unexpected response from Copilot models API: %w", err)
+	}
+
+	models := make([]string, 0, len(parsed.Data))
+	for _, m := range parsed.Data {
+		models = append(models, m.ID)
+	}
+	sort.Strings(models)
+	return models, nil
 }
 
 // Generate implements Generator.

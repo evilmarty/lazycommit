@@ -147,3 +147,76 @@ func TestOpenAIProviderDefaults(t *testing.T) {
 		t.Error("expected custom http client to be returned")
 	}
 }
+
+func TestOpenAIProviderListModelsSuccess(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/models" {
+			t.Errorf("unexpected path: %s", r.URL.Path)
+		}
+		if r.Header.Get("Authorization") != "Bearer sk-test" {
+			t.Errorf("unexpected auth header: %s", r.Header.Get("Authorization"))
+		}
+		json.NewEncoder(w).Encode(modelsResponse{
+			Data: []struct {
+				ID string `json:"id"`
+			}{{ID: "gpt-4o"}, {ID: "gpt-3.5-turbo"}},
+		})
+	}))
+	defer server.Close()
+
+	p := &OpenAIProvider{APIKey: "sk-test", BaseURL: server.URL}
+	got, err := p.ListModels(context.Background())
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	want := []string{"gpt-3.5-turbo", "gpt-4o"}
+	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+		t.Errorf("got %v, want %v", got, want)
+	}
+}
+
+func TestOpenAIProviderListModelsMissingAPIKey(t *testing.T) {
+	p := &OpenAIProvider{}
+	if _, err := p.ListModels(context.Background()); err == nil {
+		t.Fatal("expected error when no API key set and using default base URL")
+	}
+}
+
+func TestOpenAIProviderListModelsNoKeyRequiredForCustomBaseURL(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "" {
+			t.Errorf("expected no auth header, got %q", r.Header.Get("Authorization"))
+		}
+		json.NewEncoder(w).Encode(modelsResponse{})
+	}))
+	defer server.Close()
+
+	p := &OpenAIProvider{BaseURL: server.URL}
+	if _, err := p.ListModels(context.Background()); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestOpenAIProviderListModelsHTTPError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer server.Close()
+
+	p := &OpenAIProvider{APIKey: "sk-test", BaseURL: server.URL}
+	if _, err := p.ListModels(context.Background()); err == nil {
+		t.Fatal("expected error for non-2xx models response")
+	}
+}
+
+func TestOpenAIProviderListModelsInvalidJSON(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("not json"))
+	}))
+	defer server.Close()
+
+	p := &OpenAIProvider{APIKey: "sk-test", BaseURL: server.URL}
+	if _, err := p.ListModels(context.Background()); err == nil {
+		t.Fatal("expected error for invalid JSON models response")
+	}
+}

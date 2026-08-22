@@ -65,6 +65,38 @@ func RunWithDeps(args []string, stdout, stderr io.Writer, getenv GetEnv, deps De
 		newProvider = NewProvider
 	}
 
+	if cfg.ListModels {
+		providerName := ResolveProvider(cfg.Provider, getenv)
+		if providerName == "" {
+			fmt.Fprintln(stderr, "\u274c  No provider specified. Use --provider <name>, a shortcut flag (--copilot, --apfel, --ollama, --lmstudio), or set LAZYCOMMIT_PROVIDER.")
+			return 1
+		}
+		model := ResolveModel(cfg.Model, getenv)
+		gen, err := newProvider(providerName, model, cfg.BaseURL, cfg.APIKey, getenv)
+		if err != nil {
+			fmt.Fprintf(stderr, "\u274c  %s\n", err)
+			return 1
+		}
+		lister, ok := gen.(provider.ModelLister)
+		if !ok {
+			fmt.Fprintf(stderr, "\u274c  provider %q does not support listing models\n", providerName)
+			return 1
+		}
+		models, err := lister.ListModels(context.Background())
+		if err != nil {
+			fmt.Fprintf(stderr, "\u274c  %s\n", err)
+			return 1
+		}
+		if len(models) == 0 {
+			fmt.Fprintln(stdout, "No models found.")
+			return 0
+		}
+		for _, m := range models {
+			fmt.Fprintln(stdout, m)
+		}
+		return 0
+	}
+
 	if !git.IsRepo() {
 		fmt.Fprintln(stderr, "\u274c  Not inside a git repository.")
 		return 1
