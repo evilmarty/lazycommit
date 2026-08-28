@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/banner.png" alt="lazycommit" width="100%" />
+</p>
+
 # lazycommit
 
 `lazycommit` auto-generates a git commit message from your staged diff
