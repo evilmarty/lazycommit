@@ -208,8 +208,11 @@ func TestCopilotProviderDefaultsAndModel(t *testing.T) {
 	if p2.apiBaseURL() != "https://x.example" {
 		t.Errorf("got %q", p2.apiBaseURL())
 	}
-	if p.httpClient() != http.DefaultClient {
+	if p.httpClient() != defaultHTTPClient {
 		t.Error("expected default http client")
+	}
+	if p.httpClient().Timeout != defaultHTTPTimeout {
+		t.Errorf("expected default client timeout %v, got %v", defaultHTTPTimeout, p.httpClient().Timeout)
 	}
 	custom := &http.Client{}
 	p3 := &CopilotProvider{HTTPClient: custom}

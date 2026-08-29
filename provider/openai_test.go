@@ -129,8 +129,11 @@ func TestOpenAIProviderDefaults(t *testing.T) {
 	if p.model() != OpenAIDefaultModel {
 		t.Errorf("got %q", p.model())
 	}
-	if p.httpClient() != http.DefaultClient {
+	if p.httpClient() != defaultHTTPClient {
 		t.Error("expected default http client")
+	}
+	if p.httpClient().Timeout != defaultHTTPTimeout {
+		t.Errorf("expected default client timeout %v, got %v", defaultHTTPTimeout, p.httpClient().Timeout)
 	}
 
 	p2 := &OpenAIProvider{BaseURL: "https://custom.example/v1/", Model: "gpt-5"}
