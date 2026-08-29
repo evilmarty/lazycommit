@@ -14,7 +14,7 @@ import (
 // fields fall back to real implementations.
 type Deps struct {
 	Git         *Git
-	NewProvider func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error)
+	NewProvider func(cfg ProviderConfig, sources Sources) (provider.Generator, error)
 	Editor      Editor
 
 	// AppName, Version, Commit, and BuildDate are shown by --version. They
@@ -75,16 +75,16 @@ func RunWithDeps(args []string, stdout, stderr io.Writer, getenv GetEnv, deps De
 	if newProvider == nil {
 		newProvider = NewProvider
 	}
-	getGitConfig := GetGitConfig(git.ConfigGet)
+	sources := Sources{Getenv: getenv, GetGitConfig: git.ConfigGet}
 
 	if cfg.ListModels {
-		providerName := ResolveProvider(cfg.Provider, getenv, getGitConfig)
+		providerName := ResolveProvider(cfg.Provider, sources)
 		if providerName == "" {
 			fmt.Fprintln(stderr, "\u274c  No provider specified. Use --provider <name>, a shortcut flag (--copilot, --apfel, --ollama, --lmstudio), or set LAZYCOMMIT_PROVIDER.")
 			return 1
 		}
-		model := ResolveModel(cfg.Model, getenv, getGitConfig)
-		gen, err := newProvider(providerName, model, cfg.BaseURL, cfg.APIKey, getenv, getGitConfig)
+		model := ResolveModel(cfg.Model, sources)
+		gen, err := newProvider(ProviderConfig{Name: providerName, Model: model, BaseURL: cfg.BaseURL, APIKey: cfg.APIKey}, sources)
 		if err != nil {
 			fmt.Fprintf(stderr, "\u274c  %s\n", err)
 			return 1
@@ -137,16 +137,16 @@ func RunWithDeps(args []string, stdout, stderr io.Writer, getenv GetEnv, deps De
 		return 1
 	}
 
-	providerName := ResolveProvider(cfg.Provider, getenv, getGitConfig)
+	providerName := ResolveProvider(cfg.Provider, sources)
 	if providerName == "" {
 		fmt.Fprintln(stderr, "\u274c  No provider specified. Use --provider <name>, a shortcut flag (--copilot, --apfel, --ollama, --lmstudio), or set LAZYCOMMIT_PROVIDER.")
 		return 1
 	}
-	model := ResolveModel(cfg.Model, getenv, getGitConfig)
-	promptTemplate := ResolvePrompt(cfg.Prompt, getenv, getGitConfig)
+	model := ResolveModel(cfg.Model, sources)
+	promptTemplate := ResolvePrompt(cfg.Prompt, sources)
 	prompt := BuildPrompt(promptTemplate, diff, stat)
 
-	gen, err := newProvider(providerName, model, cfg.BaseURL, cfg.APIKey, getenv, getGitConfig)
+	gen, err := newProvider(ProviderConfig{Name: providerName, Model: model, BaseURL: cfg.BaseURL, APIKey: cfg.APIKey}, sources)
 	if err != nil {
 		fmt.Fprintf(stderr, "\u274c  %s\n", err)
 		return 1

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"os"
 	"sort"
@@ -57,7 +56,7 @@ func (p *CopilotProvider) httpClient() *http.Client {
 	if p.HTTPClient != nil {
 		return p.HTTPClient
 	}
-	return http.DefaultClient
+	return defaultHTTPClient
 }
 
 func (p *CopilotProvider) apiBaseURL() string {
@@ -137,18 +136,9 @@ func (p *CopilotProvider) exchangeToken(ctx context.Context, oauthToken string) 
 	req.Header.Set("Editor-Version", editorVersion)
 	req.Header.Set("Copilot-Integration-Id", integrationID)
 
-	resp, err := p.httpClient().Do(req)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to reach Copilot token endpoint: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
+	body, err := doJSONRequest(p.httpClient(), req, "copilot token endpoint")
 	if err != nil {
 		return "", "", err
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", "", fmt.Errorf("copilot token endpoint returned status %d", resp.StatusCode)
 	}
 
 	var parsed tokenExchangeResponse
@@ -208,18 +198,9 @@ func (p *CopilotProvider) ListModels(ctx context.Context) ([]string, error) {
 	req.Header.Set("Editor-Version", editorVersion)
 	req.Header.Set("Copilot-Integration-Id", integrationID)
 
-	resp, err := p.httpClient().Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("copilot models API request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
+	body, err := doJSONRequest(p.httpClient(), req, "copilot models API")
 	if err != nil {
 		return nil, err
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("copilot models API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var parsed modelsResponse
@@ -267,18 +248,9 @@ func (p *CopilotProvider) Generate(ctx context.Context, prompt string) (string, 
 	req.Header.Set("Editor-Version", editorVersion)
 	req.Header.Set("Copilot-Integration-Id", integrationID)
 
-	resp, err := p.httpClient().Do(req)
-	if err != nil {
-		return "", fmt.Errorf("copilot chat API request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
+	body, err := doJSONRequest(p.httpClient(), req, "copilot chat API")
 	if err != nil {
 		return "", err
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", fmt.Errorf("copilot chat API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var parsed chatCompletionResponse

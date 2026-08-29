@@ -14,91 +14,98 @@ func gitConfigMap(m map[string]string) GetGitConfig {
 	return func(k string) string { return m[k] }
 }
 
+func sources(env map[string]string, gitConfig map[string]string) Sources {
+	return Sources{Getenv: envMap(env), GetGitConfig: gitConfigMap(gitConfig)}
+}
+
 func TestResolveProvider(t *testing.T) {
-	if got := ResolveProvider("openai", envMap(map[string]string{"LAZYCOMMIT_PROVIDER": "apfel"}), gitConfigMap(nil)); got != "openai" {
+	if got := ResolveProvider("openai", sources(map[string]string{"LAZYCOMMIT_PROVIDER": "apfel"}, nil)); got != "openai" {
 		t.Errorf("flag should win, got %q", got)
 	}
-	if got := ResolveProvider("", envMap(map[string]string{"LAZYCOMMIT_PROVIDER": "apfel"}), gitConfigMap(map[string]string{"lazycommit.provider": "copilot"})); got != "apfel" {
+	if got := ResolveProvider("", sources(map[string]string{"LAZYCOMMIT_PROVIDER": "apfel"}, map[string]string{"lazycommit.provider": "copilot"})); got != "apfel" {
 		t.Errorf("expected env var to win over git config, got %q", got)
 	}
-	if got := ResolveProvider("", envMap(nil), gitConfigMap(map[string]string{"lazycommit.provider": "copilot"})); got != "copilot" {
+	if got := ResolveProvider("", sources(nil, map[string]string{"lazycommit.provider": "copilot"})); got != "copilot" {
 		t.Errorf("expected git config value, got %q", got)
 	}
-	if got := ResolveProvider("", envMap(nil), gitConfigMap(nil)); got != "" {
+	if got := ResolveProvider("", sources(nil, nil)); got != "" {
 		t.Errorf("expected empty string when no provider specified, got %q", got)
+	}
+	if got := ResolveProvider("", Sources{}); got != "" {
+		t.Errorf("expected zero-value Sources to be safe, got %q", got)
 	}
 }
 
 func TestResolveModel(t *testing.T) {
-	if got := ResolveModel("gpt-5", envMap(map[string]string{"LAZYCOMMIT_MODEL": "gpt-4o"}), gitConfigMap(nil)); got != "gpt-5" {
+	if got := ResolveModel("gpt-5", sources(map[string]string{"LAZYCOMMIT_MODEL": "gpt-4o"}, nil)); got != "gpt-5" {
 		t.Errorf("flag should win, got %q", got)
 	}
-	if got := ResolveModel("", envMap(map[string]string{"LAZYCOMMIT_MODEL": "gpt-4o"}), gitConfigMap(map[string]string{"lazycommit.model": "gpt-3.5"})); got != "gpt-4o" {
+	if got := ResolveModel("", sources(map[string]string{"LAZYCOMMIT_MODEL": "gpt-4o"}, map[string]string{"lazycommit.model": "gpt-3.5"})); got != "gpt-4o" {
 		t.Errorf("expected env var to win over git config, got %q", got)
 	}
-	if got := ResolveModel("", envMap(nil), gitConfigMap(map[string]string{"lazycommit.model": "gpt-3.5"})); got != "gpt-3.5" {
+	if got := ResolveModel("", sources(nil, map[string]string{"lazycommit.model": "gpt-3.5"})); got != "gpt-3.5" {
 		t.Errorf("expected git config value, got %q", got)
 	}
-	if got := ResolveModel("", envMap(nil), gitConfigMap(nil)); got != "" {
+	if got := ResolveModel("", sources(nil, nil)); got != "" {
 		t.Errorf("expected empty default, got %q", got)
 	}
 }
 
 func TestResolvePrompt(t *testing.T) {
-	if got := ResolvePrompt("custom", envMap(map[string]string{"LAZYCOMMIT_PROMPT": "env prompt"}), gitConfigMap(nil)); got != "custom" {
+	if got := ResolvePrompt("custom", sources(map[string]string{"LAZYCOMMIT_PROMPT": "env prompt"}, nil)); got != "custom" {
 		t.Errorf("flag should win, got %q", got)
 	}
-	if got := ResolvePrompt("", envMap(map[string]string{"LAZYCOMMIT_PROMPT": "env prompt"}), gitConfigMap(map[string]string{"lazycommit.prompt": "config prompt"})); got != "env prompt" {
+	if got := ResolvePrompt("", sources(map[string]string{"LAZYCOMMIT_PROMPT": "env prompt"}, map[string]string{"lazycommit.prompt": "config prompt"})); got != "env prompt" {
 		t.Errorf("expected env var to win over git config, got %q", got)
 	}
-	if got := ResolvePrompt("", envMap(nil), gitConfigMap(map[string]string{"lazycommit.prompt": "config prompt"})); got != "config prompt" {
+	if got := ResolvePrompt("", sources(nil, map[string]string{"lazycommit.prompt": "config prompt"})); got != "config prompt" {
 		t.Errorf("expected git config value, got %q", got)
 	}
-	if got := ResolvePrompt("", envMap(nil), gitConfigMap(nil)); got != DefaultPromptTemplate {
+	if got := ResolvePrompt("", sources(nil, nil)); got != DefaultPromptTemplate {
 		t.Errorf("expected default template")
 	}
 }
 
 func TestResolveBaseURL(t *testing.T) {
-	if got := ResolveBaseURL("https://flag.example.com", "copilot", envMap(map[string]string{"GITHUB_API_URL": "https://env.example.com"}), gitConfigMap(nil)); got != "https://flag.example.com" {
+	if got := ResolveBaseURL("https://flag.example.com", "copilot", sources(map[string]string{"GITHUB_API_URL": "https://env.example.com"}, nil)); got != "https://flag.example.com" {
 		t.Errorf("flag should win, got %q", got)
 	}
-	if got := ResolveBaseURL("", "copilot", envMap(map[string]string{"GITHUB_API_URL": "https://env.example.com"}), gitConfigMap(map[string]string{"lazycommit.baseUrl": "https://config.example.com"})); got != "https://env.example.com" {
+	if got := ResolveBaseURL("", "copilot", sources(map[string]string{"GITHUB_API_URL": "https://env.example.com"}, map[string]string{"lazycommit.baseUrl": "https://config.example.com"})); got != "https://env.example.com" {
 		t.Errorf("expected provider-specific env var to win over git config, got %q", got)
 	}
-	if got := ResolveBaseURL("", "openai", envMap(map[string]string{"OPENAI_BASE_URL": "https://env.example.com"}), gitConfigMap(nil)); got != "https://env.example.com" {
+	if got := ResolveBaseURL("", "openai", sources(map[string]string{"OPENAI_BASE_URL": "https://env.example.com"}, nil)); got != "https://env.example.com" {
 		t.Errorf("expected openai env var, got %q", got)
 	}
-	if got := ResolveBaseURL("", "copilot", envMap(nil), gitConfigMap(map[string]string{"lazycommit.baseUrl": "https://config.example.com"})); got != "https://config.example.com" {
+	if got := ResolveBaseURL("", "copilot", sources(nil, map[string]string{"lazycommit.baseUrl": "https://config.example.com"})); got != "https://config.example.com" {
 		t.Errorf("expected git config value, got %q", got)
 	}
-	if got := ResolveBaseURL("", "openai", envMap(nil), gitConfigMap(nil)); got != "" {
+	if got := ResolveBaseURL("", "openai", sources(nil, nil)); got != "" {
 		t.Errorf("expected empty default, got %q", got)
 	}
 }
 
 func TestResolveAPIKey(t *testing.T) {
-	if got := ResolveAPIKey("flag-key", envMap(map[string]string{"OPENAI_API_KEY": "env-key"}), gitConfigMap(nil)); got != "flag-key" {
+	if got := ResolveAPIKey("flag-key", sources(map[string]string{"OPENAI_API_KEY": "env-key"}, nil)); got != "flag-key" {
 		t.Errorf("flag should win, got %q", got)
 	}
-	if got := ResolveAPIKey("", envMap(map[string]string{"OPENAI_API_KEY": "env-key"}), gitConfigMap(map[string]string{"lazycommit.apiKey": "config-key"})); got != "env-key" {
+	if got := ResolveAPIKey("", sources(map[string]string{"OPENAI_API_KEY": "env-key"}, map[string]string{"lazycommit.apiKey": "config-key"})); got != "env-key" {
 		t.Errorf("expected env var to win over git config, got %q", got)
 	}
-	if got := ResolveAPIKey("", envMap(nil), gitConfigMap(map[string]string{"lazycommit.apiKey": "config-key"})); got != "config-key" {
+	if got := ResolveAPIKey("", sources(nil, map[string]string{"lazycommit.apiKey": "config-key"})); got != "config-key" {
 		t.Errorf("expected git config value, got %q", got)
 	}
-	if got := ResolveAPIKey("", envMap(nil), gitConfigMap(nil)); got != "" {
+	if got := ResolveAPIKey("", sources(nil, nil)); got != "" {
 		t.Errorf("expected empty default, got %q", got)
 	}
 }
 
 func TestNewProviderCopilot(t *testing.T) {
-	env := envMap(map[string]string{
+	src := sources(map[string]string{
 		"HOME":               "/home/test",
 		"COPILOT_HOSTS_FILE": "",
 		"GITHUB_API_URL":     "https://ghe.example.com/api/v3",
-	})
-	gen, err := NewProvider("copilot", "custom-model", "", "", env, gitConfigMap(nil))
+	}, nil)
+	gen, err := NewProvider(ProviderConfig{Name: "copilot", Model: "custom-model"}, src)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -118,7 +125,7 @@ func TestNewProviderCopilot(t *testing.T) {
 }
 
 func TestNewProviderCopilotUsesAPIKeyFlag(t *testing.T) {
-	gen, err := NewProvider("copilot", "", "", "explicit-key", envMap(nil), gitConfigMap(nil))
+	gen, err := NewProvider(ProviderConfig{Name: "copilot", APIKey: "explicit-key"}, sources(nil, nil))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -129,8 +136,8 @@ func TestNewProviderCopilotUsesAPIKeyFlag(t *testing.T) {
 }
 
 func TestNewProviderCopilotUsesOpenAIAPIKeyEnvFallback(t *testing.T) {
-	env := envMap(map[string]string{"OPENAI_API_KEY": "env-key"})
-	gen, err := NewProvider("copilot", "", "", "", env, gitConfigMap(nil))
+	src := sources(map[string]string{"OPENAI_API_KEY": "env-key"}, nil)
+	gen, err := NewProvider(ProviderConfig{Name: "copilot"}, src)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -141,7 +148,8 @@ func TestNewProviderCopilotUsesOpenAIAPIKeyEnvFallback(t *testing.T) {
 }
 
 func TestNewProviderCopilotUsesGitConfigAPIKeyFallback(t *testing.T) {
-	gen, err := NewProvider("copilot", "", "", "", envMap(nil), gitConfigMap(map[string]string{"lazycommit.apiKey": "config-key"}))
+	src := sources(nil, map[string]string{"lazycommit.apiKey": "config-key"})
+	gen, err := NewProvider(ProviderConfig{Name: "copilot"}, src)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -152,8 +160,8 @@ func TestNewProviderCopilotUsesGitConfigAPIKeyFallback(t *testing.T) {
 }
 
 func TestNewProviderCopilotBaseURLFlagWinsOverEnv(t *testing.T) {
-	env := envMap(map[string]string{"GITHUB_API_URL": "https://env.example.com"})
-	gen, err := NewProvider("copilot", "", "https://flag.example.com", "", env, gitConfigMap(nil))
+	src := sources(map[string]string{"GITHUB_API_URL": "https://env.example.com"}, nil)
+	gen, err := NewProvider(ProviderConfig{Name: "copilot", BaseURL: "https://flag.example.com"}, src)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -164,7 +172,8 @@ func TestNewProviderCopilotBaseURLFlagWinsOverEnv(t *testing.T) {
 }
 
 func TestNewProviderCopilotUsesGitConfigBaseURLFallback(t *testing.T) {
-	gen, err := NewProvider("copilot", "", "", "", envMap(nil), gitConfigMap(map[string]string{"lazycommit.baseUrl": "https://config.example.com"}))
+	src := sources(nil, map[string]string{"lazycommit.baseUrl": "https://config.example.com"})
+	gen, err := NewProvider(ProviderConfig{Name: "copilot"}, src)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -175,11 +184,11 @@ func TestNewProviderCopilotUsesGitConfigBaseURLFallback(t *testing.T) {
 }
 
 func TestNewProviderOpenAI(t *testing.T) {
-	env := envMap(map[string]string{
+	src := sources(map[string]string{
 		"OPENAI_API_KEY":  "sk-test",
 		"OPENAI_BASE_URL": "https://custom.openai.example/v1",
-	})
-	gen, err := NewProvider("openai", "", "", "", env, gitConfigMap(nil))
+	}, nil)
+	gen, err := NewProvider(ProviderConfig{Name: "openai"}, src)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -196,8 +205,8 @@ func TestNewProviderOpenAI(t *testing.T) {
 }
 
 func TestNewProviderOpenAIAPIKeyFlagWinsOverEnv(t *testing.T) {
-	env := envMap(map[string]string{"OPENAI_API_KEY": "sk-env"})
-	gen, err := NewProvider("openai", "", "", "sk-flag", env, gitConfigMap(nil))
+	src := sources(map[string]string{"OPENAI_API_KEY": "sk-env"}, nil)
+	gen, err := NewProvider(ProviderConfig{Name: "openai", APIKey: "sk-flag"}, src)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -208,7 +217,7 @@ func TestNewProviderOpenAIAPIKeyFlagWinsOverEnv(t *testing.T) {
 }
 
 func TestNewProviderUnknown(t *testing.T) {
-	if _, err := NewProvider("bogus", "", "", "", envMap(nil), gitConfigMap(nil)); err == nil {
+	if _, err := NewProvider(ProviderConfig{Name: "bogus"}, sources(nil, nil)); err == nil {
 		t.Fatal("expected error for unknown provider")
 	}
 }
@@ -221,4 +230,6 @@ func TestHomeDirFallback(t *testing.T) {
 	// just assert it doesn't blow up and returns *something* sane in most
 	// environments (could be empty in very restricted sandboxes).
 	_ = homeDir(envMap(nil))
+	// A nil GetEnv must also be handled safely.
+	_ = homeDir(nil)
 }

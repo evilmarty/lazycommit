@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"sort"
 	"strings"
@@ -30,7 +29,7 @@ func (p *OpenAIProvider) httpClient() *http.Client {
 	if p.HTTPClient != nil {
 		return p.HTTPClient
 	}
-	return http.DefaultClient
+	return defaultHTTPClient
 }
 
 func (p *OpenAIProvider) baseURL() string {
@@ -63,18 +62,9 @@ func (p *OpenAIProvider) ListModels(ctx context.Context) ([]string, error) {
 		req.Header.Set("Authorization", "Bearer "+p.APIKey)
 	}
 
-	resp, err := p.httpClient().Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("openai models request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
+	body, err := doJSONRequest(p.httpClient(), req, "openai models API")
 	if err != nil {
 		return nil, err
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("openai models API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var parsed modelsResponse
@@ -116,18 +106,9 @@ func (p *OpenAIProvider) Generate(ctx context.Context, prompt string) (string, e
 		req.Header.Set("Authorization", "Bearer "+p.APIKey)
 	}
 
-	resp, err := p.httpClient().Do(req)
-	if err != nil {
-		return "", fmt.Errorf("openai chat completions request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
+	body, err := doJSONRequest(p.httpClient(), req, "openai chat completions API")
 	if err != nil {
 		return "", err
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", fmt.Errorf("openai chat completions API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
 	var parsed chatCompletionResponse

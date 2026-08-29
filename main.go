@@ -4,6 +4,7 @@
 package main
 
 import (
+	"io"
 	"os"
 
 	"github.com/evilmarty/lazycommit/internal/app"
@@ -25,10 +26,18 @@ var (
 )
 
 func main() {
-	os.Exit(app.RunWithDeps(os.Args[1:], os.Stdout, os.Stderr, app.OSGetenv, app.Deps{
+	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
+}
+
+// run wires up app.RunWithDeps with the real OS stdout/stderr/env and the
+// build-time-injected version metadata, returning the process exit code.
+// Extracted from main so it can be exercised by tests without calling
+// os.Exit (which would terminate the test process).
+func run(args []string, stdout, stderr io.Writer) int {
+	return app.RunWithDeps(args, stdout, stderr, app.OSGetenv, app.Deps{
 		AppName:   appName,
 		Version:   Version,
 		Commit:    Commit,
 		BuildDate: BuildDate,
-	}))
+	})
 }
