@@ -26,7 +26,7 @@ func TestNewApfelProviderDarwin(t *testing.T) {
 }
 
 func TestNewProviderApfelViaFactoryDarwin(t *testing.T) {
-	gen, err := NewProvider("apfel", "", "", "", envMap(nil))
+	gen, err := NewProvider("apfel", "", "", "", envMap(nil), gitConfigMap(nil))
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

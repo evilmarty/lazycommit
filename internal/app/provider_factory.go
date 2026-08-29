@@ -21,42 +21,92 @@ const (
 // GetEnv abstracts environment variable lookup, primarily for testability.
 type GetEnv func(string) string
 
+// GetGitConfig abstracts `git config --get <key>` lookup, primarily for
+// testability. Implementations should return "" when the key is unset.
+type GetGitConfig func(key string) string
+
 // ResolveProvider determines the effective provider name from the flag,
-// falling back to LAZYCOMMIT_PROVIDER. Returns "" if neither is set,
-// meaning no provider was specified.
-func ResolveProvider(flagValue string, getenv GetEnv) string {
+// falling back to LAZYCOMMIT_PROVIDER, then the "lazycommit.provider" git
+// config key. Returns "" if none are set, meaning no provider was
+// specified.
+func ResolveProvider(flagValue string, getenv GetEnv, getGitConfig GetGitConfig) string {
 	if flagValue != "" {
 		return flagValue
 	}
-	return getenv("LAZYCOMMIT_PROVIDER")
+	if v := getenv("LAZYCOMMIT_PROVIDER"); v != "" {
+		return v
+	}
+	return getGitConfig("lazycommit.provider")
 }
 
 // ResolveModel determines the effective model name from the flag, falling
-// back to LAZYCOMMIT_MODEL, then "" (provider-specific default applies).
-func ResolveModel(flagValue string, getenv GetEnv) string {
+// back to LAZYCOMMIT_MODEL, then the "lazycommit.model" git config key,
+// then "" (provider-specific default applies).
+func ResolveModel(flagValue string, getenv GetEnv, getGitConfig GetGitConfig) string {
 	if flagValue != "" {
 		return flagValue
 	}
-	return getenv("LAZYCOMMIT_MODEL")
+	if v := getenv("LAZYCOMMIT_MODEL"); v != "" {
+		return v
+	}
+	return getGitConfig("lazycommit.model")
 }
 
 // ResolvePrompt determines the effective prompt template from the flag,
-// falling back to LAZYCOMMIT_PROMPT, then the built-in default.
-func ResolvePrompt(flagValue string, getenv GetEnv) string {
+// falling back to LAZYCOMMIT_PROMPT, then the "lazycommit.prompt" git
+// config key, then the built-in default.
+func ResolvePrompt(flagValue string, getenv GetEnv, getGitConfig GetGitConfig) string {
 	if flagValue != "" {
 		return flagValue
 	}
 	if v := getenv("LAZYCOMMIT_PROMPT"); v != "" {
 		return v
 	}
+	if v := getGitConfig("lazycommit.prompt"); v != "" {
+		return v
+	}
 	return DefaultPromptTemplate
 }
 
-// NewProvider builds the Generator for the given resolved provider name.
-func NewProvider(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
-	if apiKey == "" {
-		apiKey = getenv("OPENAI_API_KEY")
+// ResolveBaseURL determines the effective API base URL from the flag,
+// falling back to a provider-specific environment variable (GITHUB_API_URL
+// for copilot, OPENAI_BASE_URL for openai), then the generic
+// "lazycommit.baseUrl" git config key.
+func ResolveBaseURL(flagValue, providerName string, getenv GetEnv, getGitConfig GetGitConfig) string {
+	if flagValue != "" {
+		return flagValue
 	}
+	var envKey string
+	switch providerName {
+	case "copilot":
+		envKey = "GITHUB_API_URL"
+	case "openai":
+		envKey = "OPENAI_BASE_URL"
+	}
+	if envKey != "" {
+		if v := getenv(envKey); v != "" {
+			return v
+		}
+	}
+	return getGitConfig("lazycommit.baseUrl")
+}
+
+// ResolveAPIKey determines the effective API key from the flag, falling
+// back to OPENAI_API_KEY, then the "lazycommit.apiKey" git config key.
+func ResolveAPIKey(flagValue string, getenv GetEnv, getGitConfig GetGitConfig) string {
+	if flagValue != "" {
+		return flagValue
+	}
+	if v := getenv("OPENAI_API_KEY"); v != "" {
+		return v
+	}
+	return getGitConfig("lazycommit.apiKey")
+}
+
+// NewProvider builds the Generator for the given resolved provider name.
+func NewProvider(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
+	apiKey = ResolveAPIKey(apiKey, getenv, getGitConfig)
+	baseURL = ResolveBaseURL(baseURL, name, getenv, getGitConfig)
 
 	switch name {
 	case "copilot":
@@ -68,9 +118,6 @@ func NewProvider(name, model, baseURL, apiKey string, getenv GetEnv) (provider.G
 		if appsFile == "" {
 			appsFile = filepath.Join(homeDir(getenv), ".config", "github-copilot", "apps.json")
 		}
-		if baseURL == "" {
-			baseURL = getenv("GITHUB_API_URL")
-		}
 		return &provider.CopilotProvider{
 			Model:       model,
 			APIBaseURL:  baseURL,
@@ -81,9 +128,6 @@ func NewProvider(name, model, baseURL, apiKey string, getenv GetEnv) (provider.G
 			Temperature: 0.2,
 		}, nil
 	case "openai":
-		if baseURL == "" {
-			baseURL = getenv("OPENAI_BASE_URL")
-		}
 		return &provider.OpenAIProvider{
 			APIKey:      apiKey,
 			Model:       model,

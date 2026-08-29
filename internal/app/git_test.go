@@ -179,6 +179,27 @@ func TestGitLastCommitOneline(t *testing.T) {
 	}
 }
 
+func TestGitConfigGet(t *testing.T) {
+	g := &Git{Runner: fakeRunner(t, map[string]struct {
+		out string
+		err error
+	}{
+		"git config --get lazycommit.provider": {out: "copilot\n", err: nil},
+	})}
+	if got := g.ConfigGet("lazycommit.provider"); got != "copilot" {
+		t.Errorf("got %q, want %q", got, "copilot")
+	}
+
+	// Unset keys make `git config --get` exit non-zero; ConfigGet must
+	// treat that as "no value" rather than surfacing an error.
+	g2 := &Git{Runner: func(name string, args []string) ([]byte, error) {
+		return nil, errors.New("exit status 1")
+	}}
+	if got := g2.ConfigGet("lazycommit.model"); got != "" {
+		t.Errorf("expected empty string for unset key, got %q", got)
+	}
+}
+
 func TestGitDefaultRunnerAndInteractive(t *testing.T) {
 	// Exercise the default() accessors without invoking real commands.
 	g := &Git{}

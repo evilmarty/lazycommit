@@ -16,8 +16,8 @@ blank commit message.
   Completions APIs (including local servers like Ollama and LM Studio), or
   the local [`apfel`](https://github.com/Arthur-Ficial/apfel) on-device
   model (macOS only) — no network calls required. A provider must be
-  selected explicitly via `--provider`/a shortcut flag or
-  `LAZYCOMMIT_PROVIDER`; there is no default.
+  selected explicitly via `--provider`/a shortcut flag, `LAZYCOMMIT_PROVIDER`,
+  or `git config lazycommit.provider`; there is no default.
 - **Editor review by default**: the generated message is pre-populated in
   `$EDITOR` before committing, so you can tweak it. Use `--no-edit` to skip
   the review step and commit as-is.
@@ -76,12 +76,16 @@ Usage: lazycommit [options] [-- git-commit-flags]
 
 Auto-generates a commit message using an LLM provider, pre-populates
 $EDITOR for review, then commits. A provider must be specified via
---provider, a shortcut flag, or LAZYCOMMIT_PROVIDER.
+--provider, a shortcut flag, LAZYCOMMIT_PROVIDER, or
+"git config lazycommit.provider".
+
+Settings may also be read from git config (e.g. "git config
+lazycommit.provider copilot"); precedence is flag > env var > git config.
 
 Options:
   -p, --patch          Interactively stage hunks via git add -p before committing
       --provider <p>    Provider to use: copilot, openai, apfel (or use LAZYCOMMIT_PROVIDER)
-      --model <m>       Model name to use (provider-specific default if omitted)
+      --model <m>       Model name to use (provider-specific default if omitted; or use LAZYCOMMIT_MODEL)
       --base-url <url>  Override the API base URL (copilot/openai providers)
       --api-key <key>   API key/OAuth token to use (openai/copilot providers; or use OPENAI_API_KEY)
       --prompt <text>   Override the prompt template (or use LAZYCOMMIT_PROMPT)
@@ -123,8 +127,9 @@ Prompt template:
 ### Examples
 
 A provider must be specified — either pass `--provider <name>`/a shortcut
-flag on every invocation, or set `export LAZYCOMMIT_PROVIDER=copilot` (or
-`openai`/`apfel`) once so you don't have to repeat it:
+flag on every invocation, set `export LAZYCOMMIT_PROVIDER=copilot` (or
+`openai`/`apfel`) once, or run `git config lazycommit.provider copilot` so
+you don't have to repeat it:
 
 ```sh
 # Use Copilot
@@ -215,21 +220,31 @@ instead of trying (and failing) to exec a nonexistent `apfel` binary.
 
 ## Configuration
 
-Flags always take precedence over environment variables. `--provider` (or
-one of `--copilot`/`--apfel`/`--ollama`/`--lmstudio`) or `LAZYCOMMIT_PROVIDER`
-is **required** — there is no default provider.
+Settings can be provided via a CLI flag, an environment variable, or a
+`git config` key, in that order of precedence (flags win over environment
+variables, which win over `git config`). `--provider` (or one of
+`--copilot`/`--apfel`/`--ollama`/`--lmstudio`), `LAZYCOMMIT_PROVIDER`, or
+`git config lazycommit.provider` is **required** — there is no default
+provider.
 
-| Flag          | Environment variable   | Description                                        |
-|---------------|-------------------------|------------------------------------------------------|
-| `--provider`  | `LAZYCOMMIT_PROVIDER`  | Provider to use: `copilot`, `openai`, or `apfel` (macOS only) (required) |
-| `--model`     | `LAZYCOMMIT_MODEL`     | Model name (provider-specific default if omitted)   |
-| `--prompt`    | `LAZYCOMMIT_PROMPT`    | Prompt template override (see below)                |
-| `--base-url`  | `GITHUB_API_URL`       | Base URL override for the `copilot` provider         |
-| `--base-url`  | `OPENAI_BASE_URL`      | Base URL override for the `openai` provider          |
-| `--api-key`   | `OPENAI_API_KEY`       | API key for `openai`, or OAuth token for `copilot` (skips hosts/apps file lookup) |
-| —             | `EDITOR`               | Editor used to review the generated message          |
-| —             | `COPILOT_HOSTS_FILE`   | Path to the Copilot OAuth hosts.json file            |
-| —             | `COPILOT_APPS_FILE`    | Path to the Copilot OAuth apps.json file             |
+| Flag          | Environment variable   | `git config` key         | Description                                        |
+|---------------|-------------------------|---------------------------|------------------------------------------------------|
+| `--provider`  | `LAZYCOMMIT_PROVIDER`  | `lazycommit.provider`     | Provider to use: `copilot`, `openai`, or `apfel` (macOS only) (required) |
+| `--model`     | `LAZYCOMMIT_MODEL`     | `lazycommit.model`        | Model name (provider-specific default if omitted)   |
+| `--prompt`    | `LAZYCOMMIT_PROMPT`    | `lazycommit.prompt`       | Prompt template override (see below)                |
+| `--base-url`  | `GITHUB_API_URL`       | `lazycommit.baseUrl`      | Base URL override for the `copilot` provider         |
+| `--base-url`  | `OPENAI_BASE_URL`      | `lazycommit.baseUrl`      | Base URL override for the `openai` provider          |
+| `--api-key`   | `OPENAI_API_KEY`       | `lazycommit.apiKey`       | API key for `openai`, or OAuth token for `copilot` (skips hosts/apps file lookup) |
+| —             | `EDITOR`               | —                          | Editor used to review the generated message          |
+| —             | `COPILOT_HOSTS_FILE`   | —                          | Path to the Copilot OAuth hosts.json file            |
+| —             | `COPILOT_APPS_FILE`    | —                          | Path to the Copilot OAuth apps.json file             |
+
+For example, to persistently configure a repo (or `--global`) to use the
+`copilot` provider without an env var or flag:
+
+```sh
+git config lazycommit.provider copilot
+```
 
 > **Note:** If `EDITOR` is unset or empty, the review step is skipped
 > entirely and the generated message is committed as-is, the same as

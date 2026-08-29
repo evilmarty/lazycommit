@@ -134,12 +134,16 @@ func Usage() string {
 
 Auto-generates a commit message using an LLM provider, pre-populates
 $EDITOR for review, then commits. A provider must be specified via
---provider, a shortcut flag, or LAZYCOMMIT_PROVIDER.
+--provider, a shortcut flag, LAZYCOMMIT_PROVIDER, or
+"git config lazycommit.provider".
+
+Settings may also be read from git config (e.g. "git config
+lazycommit.provider copilot"); precedence is flag > env var > git config.
 
 Options:
   -p, --patch          Interactively stage hunks via git add -p before committing
       --provider <p>    Provider to use: copilot, openai, apfel (or use LAZYCOMMIT_PROVIDER)
-      --model <m>       Model name to use (provider-specific default if omitted)
+      --model <m>       Model name to use (provider-specific default if omitted; or use LAZYCOMMIT_MODEL)
       --base-url <url>  Override the API base URL (copilot/openai providers)
       --api-key <key>   API key/OAuth token to use (openai/copilot providers; or use OPENAI_API_KEY)
       --prompt <text>   Override the prompt template (or use LAZYCOMMIT_PROMPT)
