@@ -21,7 +21,7 @@ func TestNewApfelProviderNonDarwin(t *testing.T) {
 }
 
 func TestNewProviderApfelViaFactoryNonDarwin(t *testing.T) {
-	gen, err := NewProvider("apfel", "", "", "", envMap(nil))
+	gen, err := NewProvider("apfel", "", "", "", envMap(nil), gitConfigMap(nil))
 	if err == nil {
 		t.Fatal("expected error on non-darwin platforms")
 	}

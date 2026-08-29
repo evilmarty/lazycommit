@@ -103,6 +103,19 @@ func (g *Git) Commit(message string, flags []string) error {
 	return g.interactive()(args)
 }
 
+// ConfigGet returns the resolved value of the given `git config` key (e.g.
+// "lazycommit.provider"), checking local, global, and system config in
+// git's usual order. It returns "" if the key is unset or the lookup
+// otherwise fails (e.g. no git config value at all), mirroring how GetEnv
+// reports unset environment variables.
+func (g *Git) ConfigGet(key string) string {
+	out, err := g.run("config", "--get", key)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(out)
+}
+
 // LastCommitOneline returns `git log -1 --oneline` for display purposes.
 func (g *Git) LastCommitOneline() (string, error) {
 	out, err := g.run("log", "-1", "--oneline")

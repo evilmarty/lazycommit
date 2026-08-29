@@ -117,7 +117,7 @@ func TestRunVersionDefaults(t *testing.T) {
 func TestRunListModelsSuccess(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			return fakeModelLister{models: []string{"gpt-4o", "gpt-4.1"}}, nil
 		},
 	}
@@ -134,7 +134,7 @@ func TestRunListModelsSuccess(t *testing.T) {
 func TestRunListModelsEmpty(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			return fakeModelLister{models: nil}, nil
 		},
 	}
@@ -150,7 +150,7 @@ func TestRunListModelsEmpty(t *testing.T) {
 func TestRunListModelsListError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			return fakeModelLister{err: errors.New("models request failed")}, nil
 		},
 	}
@@ -166,7 +166,7 @@ func TestRunListModelsListError(t *testing.T) {
 func TestRunListModelsUnsupportedProvider(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			// apfel (and any provider that doesn't implement ModelLister).
 			return fakeGenerator{}, nil
 		},
@@ -183,7 +183,7 @@ func TestRunListModelsUnsupportedProvider(t *testing.T) {
 func TestRunListModelsProviderConstructionError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			return nil, errors.New("boom")
 		},
 	}
@@ -200,7 +200,7 @@ func TestRunListModelsNoProviderSpecified(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	called := false
 	deps := Deps{
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			called = true
 			return fakeModelLister{}, nil
 		},
@@ -221,7 +221,7 @@ func TestRunListModelsDoesNotRequireGitRepo(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
 		Git: newFakeGit(false, false), // not a repo
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			return fakeModelLister{models: []string{"m1"}}, nil
 		},
 	}
@@ -267,7 +267,7 @@ func TestRunDryRun(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
 		Git: newFakeGit(true, true),
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			return fakeGenerator{msg: "feat: add cool thing"}, nil
 		},
 	}
@@ -290,7 +290,7 @@ func TestRunEmptyGeneratedMessageFallsBackToCommit(t *testing.T) {
 	}
 	deps := Deps{
 		Git: git,
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			return fakeGenerator{msg: ""}, nil
 		},
 	}
@@ -313,7 +313,7 @@ func TestRunNoEditCommitsDirectly(t *testing.T) {
 	}
 	deps := Deps{
 		Git: git,
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			return fakeGenerator{msg: "feat: no edit path"}, nil
 		},
 	}
@@ -341,7 +341,7 @@ func TestRunEmptyEditorSkipsReviewLikeNoEdit(t *testing.T) {
 	}
 	deps := Deps{
 		Git: git,
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			return fakeGenerator{msg: "feat: unset editor"}, nil
 		},
 		Editor: func(path string) error {
@@ -372,7 +372,7 @@ func TestRunWithEditorReview(t *testing.T) {
 	}
 	deps := Deps{
 		Git: git,
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			return fakeGenerator{msg: "feat: reviewed"}, nil
 		},
 		Editor: func(path string) error {
@@ -393,7 +393,7 @@ func TestRunEditorWipesMessageAborts(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
 		Git: newFakeGit(true, true),
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			return fakeGenerator{msg: "feat: original"}, nil
 		},
 		Editor: func(path string) error {
@@ -413,7 +413,7 @@ func TestRunGeneratorError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
 		Git: newFakeGit(true, true),
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			return fakeGenerator{err: errors.New("network down")}, nil
 		},
 	}
@@ -430,7 +430,7 @@ func TestRunUnknownProviderError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
 		Git: newFakeGit(true, true),
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			return nil, errors.New("unknown provider")
 		},
 	}
@@ -452,7 +452,7 @@ func TestRunPatchFlagInvokesAddPatch(t *testing.T) {
 	}
 	deps := Deps{
 		Git: git,
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			return fakeGenerator{msg: "feat: patched"}, nil
 		},
 		Editor: func(path string) error { return nil },
@@ -478,7 +478,7 @@ func TestRunNoProviderSpecifiedError(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
 		Git: newFakeGit(true, true),
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			t.Fatal("NewProvider should not be called when no provider is specified")
 			return nil, nil
 		},
@@ -496,7 +496,7 @@ func TestRunProviderFromEnvVar(t *testing.T) {
 	var stdout, stderr bytes.Buffer
 	deps := Deps{
 		Git: newFakeGit(true, true),
-		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv) (provider.Generator, error) {
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
 			if name != "apfel" {
 				t.Errorf("expected provider %q, got %q", "apfel", name)
 			}
@@ -509,5 +509,60 @@ func TestRunProviderFromEnvVar(t *testing.T) {
 	}
 	if !strings.Contains(stdout.String(), "feat: via env provider") {
 		t.Errorf("got stdout %q", stdout.String())
+	}
+}
+
+// newFakeGitConfig wraps newFakeGit's Runner, additionally answering
+// `git config --get <key>` from the given map so tests can exercise the
+// lazycommit.* git-config resolution path end-to-end.
+func newFakeGitConfig(isRepo, hasStaged bool, config map[string]string) *Git {
+	g := newFakeGit(isRepo, hasStaged)
+	inner := g.Runner
+	g.Runner = func(name string, args []string) ([]byte, error) {
+		if len(args) == 3 && args[0] == "config" && args[1] == "--get" {
+			if v, ok := config[args[2]]; ok {
+				return []byte(v), nil
+			}
+			return nil, errors.New("exit status 1")
+		}
+		return inner(name, args)
+	}
+	return g
+}
+
+func TestRunProviderFromGitConfig(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	deps := Deps{
+		Git: newFakeGitConfig(true, true, map[string]string{"lazycommit.provider": "apfel"}),
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
+			if name != "apfel" {
+				t.Errorf("expected provider %q, got %q", "apfel", name)
+			}
+			return fakeGenerator{msg: "feat: via git config provider"}, nil
+		},
+	}
+	code := RunWithDeps([]string{"--dry-run"}, &stdout, &stderr, envMap(nil), deps)
+	if code != 0 {
+		t.Fatalf("expected exit 0, got %d: stderr=%s", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "feat: via git config provider") {
+		t.Errorf("got stdout %q", stdout.String())
+	}
+}
+
+func TestRunEnvVarWinsOverGitConfigProvider(t *testing.T) {
+	var stdout, stderr bytes.Buffer
+	deps := Deps{
+		Git: newFakeGitConfig(true, true, map[string]string{"lazycommit.provider": "copilot"}),
+		NewProvider: func(name, model, baseURL, apiKey string, getenv GetEnv, getGitConfig GetGitConfig) (provider.Generator, error) {
+			if name != "apfel" {
+				t.Errorf("expected env var to win, got provider %q", name)
+			}
+			return fakeGenerator{msg: "feat: env wins"}, nil
+		},
+	}
+	code := RunWithDeps([]string{"--dry-run"}, &stdout, &stderr, envMap(map[string]string{"LAZYCOMMIT_PROVIDER": "apfel"}), deps)
+	if code != 0 {
+		t.Fatalf("expected exit 0, got %d: stderr=%s", code, stderr.String())
 	}
 }
