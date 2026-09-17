@@ -80,7 +80,7 @@ func RunWithDeps(args []string, stdout, stderr io.Writer, getenv GetEnv, deps De
 	if cfg.ListModels {
 		providerName := ResolveProvider(cfg.Provider, sources)
 		if providerName == "" {
-			fmt.Fprintln(stderr, "\u274c  No provider specified. Use --provider <name>, a shortcut flag (--copilot, --apfel, --ollama, --lmstudio), or set LAZYCOMMIT_PROVIDER.")
+			fmt.Fprintln(stderr, "\u274c  No provider specified. Use --provider <name>, a shortcut flag (--copilot, --apfel, --fm, --ollama, --lmstudio), or set LAZYCOMMIT_PROVIDER.")
 			return 1
 		}
 		model := ResolveModel(cfg.Model, sources)
@@ -139,7 +139,7 @@ func RunWithDeps(args []string, stdout, stderr io.Writer, getenv GetEnv, deps De
 
 	providerName := ResolveProvider(cfg.Provider, sources)
 	if providerName == "" {
-		fmt.Fprintln(stderr, "\u274c  No provider specified. Use --provider <name>, a shortcut flag (--copilot, --apfel, --ollama, --lmstudio), or set LAZYCOMMIT_PROVIDER.")
+		fmt.Fprintln(stderr, "\u274c  No provider specified. Use --provider <name>, a shortcut flag (--copilot, --apfel, --fm, --ollama, --lmstudio), or set LAZYCOMMIT_PROVIDER.")
 		return 1
 	}
 	model := ResolveModel(cfg.Model, sources)

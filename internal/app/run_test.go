@@ -164,19 +164,22 @@ func TestRunListModelsListError(t *testing.T) {
 }
 
 func TestRunListModelsUnsupportedProvider(t *testing.T) {
-	var stdout, stderr bytes.Buffer
-	deps := Deps{
-		NewProvider: func(cfg ProviderConfig, sources Sources) (provider.Generator, error) {
-			// apfel (and any provider that doesn't implement ModelLister).
-			return fakeGenerator{}, nil
-		},
-	}
-	code := RunWithDeps([]string{"--list-models", "--apfel"}, &stdout, &stderr, envMap(nil), deps)
-	if code != 1 {
-		t.Fatalf("expected exit 1, got %d", code)
-	}
-	if !strings.Contains(stderr.String(), "does not support listing models") {
-		t.Errorf("expected unsupported-provider error, got %q", stderr.String())
+	for _, providerFlag := range []string{"--apfel", "--fm"} {
+		t.Run(providerFlag, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			deps := Deps{
+				NewProvider: func(cfg ProviderConfig, sources Sources) (provider.Generator, error) {
+					return fakeGenerator{}, nil
+				},
+			}
+			code := RunWithDeps([]string{"--list-models", providerFlag}, &stdout, &stderr, envMap(nil), deps)
+			if code != 1 {
+				t.Fatalf("expected exit 1, got %d", code)
+			}
+			if !strings.Contains(stderr.String(), "does not support listing models") {
+				t.Errorf("expected unsupported-provider error, got %q", stderr.String())
+			}
+		})
 	}
 }
 

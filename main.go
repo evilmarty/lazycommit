@@ -1,5 +1,5 @@
 // Command lazycommit auto-generates a commit message from the staged diff
-// using a pluggable LLM provider (Copilot, OpenAI, or the local apfel CLI),
+// using a pluggable LLM provider (Copilot, OpenAI, or a local macOS CLI),
 // optionally opens it in $EDITOR for review, then commits.
 package main
 

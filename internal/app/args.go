@@ -79,6 +79,9 @@ func ParseArgs(args []string) (*Config, []string, error) {
 		case "--apfel":
 			// Shorthand for --provider apfel.
 			cfg.Provider = "apfel"
+		case "--fm":
+			// Shorthand for --provider fm.
+			cfg.Provider = "fm"
 		case "--copilot":
 			// Shorthand for --provider copilot.
 			cfg.Provider = "copilot"
@@ -142,13 +145,14 @@ lazycommit.provider copilot"); precedence is flag > env var > git config.
 
 Options:
   -p, --patch          Interactively stage hunks via git add -p before committing
-      --provider <p>    Provider to use: copilot, openai, apfel (or use LAZYCOMMIT_PROVIDER)
+      --provider <p>    Provider to use: copilot, openai, apfel, fm (or use LAZYCOMMIT_PROVIDER)
       --model <m>       Model name to use (provider-specific default if omitted; or use LAZYCOMMIT_MODEL)
       --base-url <url>  Override the API base URL (copilot/openai providers)
       --api-key <key>   API key/OAuth token to use (openai/copilot providers; or use OPENAI_API_KEY)
       --prompt <text>   Override the prompt template (or use LAZYCOMMIT_PROMPT)
       --copilot         Shorthand for --provider copilot
       --apfel           Shorthand for --provider apfel (local Apple model, no network; macOS only)
+      --fm              Shorthand for --provider fm (local Apple Foundation Model, macOS 27+ only)
       --ollama          Shorthand for --provider openai --base-url http://localhost:11434/v1
       --lmstudio        Shorthand for --provider openai --base-url http://localhost:1234/v1
       --no-edit         Skip the $EDITOR review step and commit the message as-is

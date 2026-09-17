@@ -57,6 +57,11 @@ func TestParseArgs(t *testing.T) {
 			wantCfg: Config{Provider: "apfel"},
 		},
 		{
+			name:    "fm shorthand",
+			args:    []string{"--fm"},
+			wantCfg: Config{Provider: "fm"},
+		},
+		{
 			name:    "copilot shorthand",
 			args:    []string{"--copilot"},
 			wantCfg: Config{Provider: "copilot"},
