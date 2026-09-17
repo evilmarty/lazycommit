@@ -172,8 +172,10 @@ func NewProvider(cfg ProviderConfig, sources Sources) (provider.Generator, error
 		}, nil
 	case "apfel":
 		return newApfelProvider()
+	case "fm":
+		return newFMProvider(cfg.Model)
 	default:
-		return nil, fmt.Errorf("unknown provider %q (expected copilot, openai, or apfel)", cfg.Name)
+		return nil, fmt.Errorf("unknown provider %q (expected copilot, openai, apfel, or fm)", cfg.Name)
 	}
 }
 

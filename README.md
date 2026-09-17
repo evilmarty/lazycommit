@@ -14,8 +14,9 @@ blank commit message.
 
 - **Pluggable providers**: GitHub Copilot, OpenAI-compatible Chat
   Completions APIs (including local servers like Ollama and LM Studio), or
-  the local [`apfel`](https://github.com/Arthur-Ficial/apfel) on-device
-  model (macOS only) — no network calls required. A provider must be
+  the local [`apfel`](https://github.com/Arthur-Ficial/apfel) or built-in
+  `fm` Apple Foundation Models CLI (macOS only) — no network calls required.
+  A provider must be
   selected explicitly via `--provider`/a shortcut flag, `LAZYCOMMIT_PROVIDER`,
   or `git config lazycommit.provider`; there is no default.
 - **Editor review by default**: the generated message is pre-populated in
@@ -84,13 +85,14 @@ lazycommit.provider copilot"); precedence is flag > env var > git config.
 
 Options:
   -p, --patch          Interactively stage hunks via git add -p before committing
-      --provider <p>    Provider to use: copilot, openai, apfel (or use LAZYCOMMIT_PROVIDER)
+      --provider <p>    Provider to use: copilot, openai, apfel, fm (or use LAZYCOMMIT_PROVIDER)
       --model <m>       Model name to use (provider-specific default if omitted; or use LAZYCOMMIT_MODEL)
       --base-url <url>  Override the API base URL (copilot/openai providers)
       --api-key <key>   API key/OAuth token to use (openai/copilot providers; or use OPENAI_API_KEY)
       --prompt <text>   Override the prompt template (or use LAZYCOMMIT_PROMPT)
       --copilot         Shorthand for --provider copilot
       --apfel           Shorthand for --provider apfel (local Apple model, no network; macOS only)
+      --fm              Shorthand for --provider fm (local Apple Foundation Model, macOS 27+ only)
       --ollama          Shorthand for --provider openai --base-url http://localhost:11434/v1
       --lmstudio        Shorthand for --provider openai --base-url http://localhost:1234/v1
       --no-edit         Skip the $EDITOR review step and commit the message as-is
@@ -128,7 +130,7 @@ Prompt template:
 
 A provider must be specified — either pass `--provider <name>`/a shortcut
 flag on every invocation, set `export LAZYCOMMIT_PROVIDER=copilot` (or
-`openai`/`apfel`) once, or run `git config lazycommit.provider copilot` so
+`openai`/`apfel`/`fm`) once, or run `git config lazycommit.provider copilot` so
 you don't have to repeat it:
 
 ```sh
@@ -149,6 +151,9 @@ lazycommit --provider openai --model gpt-4o --api-key sk-...
 
 # Use the local apfel model (no network calls, macOS only)
 lazycommit --provider apfel   # or: lazycommit --apfel
+
+# Use the built-in Apple Foundation Models CLI (macOS 27+ only)
+lazycommit --provider fm --model system   # or: lazycommit --fm
 
 # Use a local Ollama or LM Studio server (OpenAI-compatible, no API key needed)
 lazycommit --ollama
@@ -218,18 +223,35 @@ instead of trying (and failing) to exec a nonexistent `apfel` binary.
   — it just talks to whatever on-device model `apfel` provides); using
   `--list-models --apfel`/`--list-models --provider apfel` is an error.
 
+### `fm` (macOS 27+ only)
+
+Shells out to the built-in Apple Foundation Models CLI (`fm`) with
+`fm respond --no-stream` to run the local on-device model — no network calls
+or API key. Equivalent to `--provider fm` or the `--fm` shorthand.
+
+Available beginning with macOS 27, `fm` and its underlying on-device model
+are Apple-only. `lazycommit` binaries built for other platforms omit the
+real provider implementation entirely (via a Go build constraint), so
+selecting `fm`/`--fm` on Linux or Windows fails immediately with a clear
+error.
+
+- `--model` selects the `fm` model when supplied; `fm` currently provides
+  the `system` model.
+- Does not support `--list-models`; using
+  `--list-models --fm`/`--list-models --provider fm` is an error.
+
 ## Configuration
 
 Settings can be provided via a CLI flag, an environment variable, or a
 `git config` key, in that order of precedence (flags win over environment
 variables, which win over `git config`). `--provider` (or one of
-`--copilot`/`--apfel`/`--ollama`/`--lmstudio`), `LAZYCOMMIT_PROVIDER`, or
+`--copilot`/`--apfel`/`--fm`/`--ollama`/`--lmstudio`), `LAZYCOMMIT_PROVIDER`, or
 `git config lazycommit.provider` is **required** — there is no default
 provider.
 
 | Flag          | Environment variable   | `git config` key         | Description                                        |
 |---------------|-------------------------|---------------------------|------------------------------------------------------|
-| `--provider`  | `LAZYCOMMIT_PROVIDER`  | `lazycommit.provider`     | Provider to use: `copilot`, `openai`, or `apfel` (macOS only) (required) |
+| `--provider`  | `LAZYCOMMIT_PROVIDER`  | `lazycommit.provider`     | Provider to use: `copilot`, `openai`, `apfel`, or `fm` (macOS only) (required) |
 | `--model`     | `LAZYCOMMIT_MODEL`     | `lazycommit.model`        | Model name (provider-specific default if omitted)   |
 | `--prompt`    | `LAZYCOMMIT_PROMPT`    | `lazycommit.prompt`       | Prompt template override (see below)                |
 | `--base-url`  | `GITHUB_API_URL`       | `lazycommit.baseUrl`      | Base URL override for the `copilot` provider         |

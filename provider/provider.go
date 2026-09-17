@@ -1,6 +1,6 @@
 // Package provider defines the interface used to generate commit messages
-// from a prompt, plus the concrete implementations: copilot, openai, and
-// apfel.
+// from a prompt, plus the concrete implementations: copilot, openai, apfel,
+// and fm.
 package provider
 
 import (
@@ -33,8 +33,8 @@ type Generator interface {
 }
 
 // ModelLister is implemented by providers that can list the models
-// available to them (currently copilot and openai; apfel does not
-// implement it, since it has no concept of selectable models).
+// available to them (currently copilot and openai; apfel and fm do not
+// implement it, since they have no concept of selectable models).
 type ModelLister interface {
 	ListModels(ctx context.Context) ([]string, error)
 }
