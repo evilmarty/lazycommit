@@ -4,7 +4,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/evilmarty/lazycommit/internal/cmdrunner"
@@ -36,7 +35,7 @@ func (p *FoundationModelProvider) Generate(_ context.Context, prompt string) (st
 
 	out, err := p.runner()("fm", args)
 	if err != nil {
-		return "", fmt.Errorf("local generation with fm failed: %w", err)
+		return "", localGenerationError("fm", err)
 	}
 
 	return strings.TrimSpace(string(out)), nil

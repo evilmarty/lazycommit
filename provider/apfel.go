@@ -9,7 +9,6 @@ package provider
 
 import (
 	"context"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -51,7 +50,7 @@ func (p *ApfelProvider) Generate(_ context.Context, prompt string) (string, erro
 
 	out, err := p.runner()("apfel", args)
 	if err != nil {
-		return "", fmt.Errorf("local generation with apfel failed: %w", err)
+		return "", localGenerationError("apfel", err)
 	}
 
 	return strings.TrimSpace(string(out)), nil
