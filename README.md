@@ -219,6 +219,7 @@ provider implementation entirely (via a Go build constraint), so selecting
 `apfel`/`--apfel` on Linux or Windows fails immediately with a clear error
 instead of trying (and failing) to exec a nonexistent `apfel` binary.
 
+- Failed commands also include `apfel`'s stderr output in the error message.
 - Does not support `--list-models` (it has no concept of a model catalog
   — it just talks to whatever on-device model `apfel` provides); using
   `--list-models --apfel`/`--list-models --provider apfel` is an error.
@@ -237,6 +238,7 @@ error.
 
 - `--model` selects the `fm` model when supplied; `fm` currently provides
   the `system` model.
+- Failed commands also include `fm`'s stderr output in the error message.
 - Does not support `--list-models`; using
   `--list-models --fm`/`--list-models --provider fm` is an error.
 
